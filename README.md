@@ -47,6 +47,12 @@ This approach also detects changes in instrumented and generated classes. You ca
 
 [melix](https://github.com/melix) has developed a [gradle plugin](https://github.com/melix/japicmp-gradle-plugin) for japicmp.
 
+##Requirements##
+
+japicmp is compiled with JDK 1.7, hence you should run it with a JRE >= 1.7. It can compare jar files that are compiled with JDK >= 1.5.
+
+The maven plugin requires maven in version >= 3.1.x.
+
 ##Tools##
 
 ###Usage CLI tool###
