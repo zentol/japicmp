@@ -4,6 +4,7 @@ import japicmp.config.Options;
 import japicmp.exception.JApiCmpException;
 import japicmp.exception.JApiCmpException.Reason;
 import japicmp.model.JApiClass;
+import japicmp.model.jsf.JsfComponent;
 import japicmp.output.OutputFilter;
 import japicmp.output.extapi.jpa.JpaAnalyzer;
 import japicmp.output.extapi.jpa.model.JpaTable;
@@ -25,17 +26,10 @@ public class XmlOutputGenerator {
 	private static final String XML_SCHEMA = XSD_FILENAME;
 	private static final Logger LOGGER = Logger.getLogger(XmlOutputGenerator.class.getName());
 
-	public void generate(String oldArchivePath, String newArchivePath, List<JApiClass> jApiClasses, Options options) {
-		JApiCmpXmlRoot jApiCmpXmlRoot = createRootElement(oldArchivePath, newArchivePath, jApiClasses);
-		//analyzeJpaAnnotations(jApiCmpXmlRoot, jApiClasses);
+	public void generate(String oldArchivePath, String newArchivePath, List<JApiClass> jApiClasses, Options options, List<JsfComponent> jsfComponents) {
+		JApiCmpXmlRoot jApiCmpXmlRoot = createRootElement(oldArchivePath, newArchivePath, jApiClasses, jsfComponents);
 		filterClasses(jApiClasses, options);
 		createXmlDocumentAndSchema(options, jApiCmpXmlRoot);
-	}
-
-	private void analyzeJpaAnnotations(JApiCmpXmlRoot jApiCmpXmlRoot, List<JApiClass> jApiClasses) {
-		JpaAnalyzer jpaAnalyzer = new JpaAnalyzer();
-		List<JpaTable> jpaEntities = jpaAnalyzer.analyze(jApiClasses);
-		//jApiCmpXmlRoot.setJpaTables(jpaEntities);
 	}
 
 	private void createXmlDocumentAndSchema(Options options, JApiCmpXmlRoot jApiCmpXmlRoot) {
@@ -94,11 +88,12 @@ public class XmlOutputGenerator {
 		outputFilter.filter(jApiClasses);
 	}
 
-	private JApiCmpXmlRoot createRootElement(String oldArchivePath, String newArchivePath, List<JApiClass> jApiClasses) {
+	private JApiCmpXmlRoot createRootElement(String oldArchivePath, String newArchivePath, List<JApiClass> jApiClasses, List<JsfComponent> jsfComponents) {
 		JApiCmpXmlRoot jApiCmpXmlRoot = new JApiCmpXmlRoot();
 		jApiCmpXmlRoot.setOldJar(oldArchivePath);
 		jApiCmpXmlRoot.setNewJar(newArchivePath);
 		jApiCmpXmlRoot.setClasses(jApiClasses);
+		jApiCmpXmlRoot.setJsfComponents(jsfComponents);
 		return jApiCmpXmlRoot;
 	}
 }

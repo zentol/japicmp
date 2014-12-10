@@ -3,10 +3,12 @@ package japicmp.maven;
 import com.google.common.base.Optional;
 import japicmp.cmp.JarArchiveComparator;
 import japicmp.cmp.JarArchiveComparatorOptions;
+import japicmp.cmp.jsf.JsfArchiveComparator;
 import japicmp.config.Options;
 import japicmp.model.AccessModifier;
 import japicmp.model.JApiChangeStatus;
 import japicmp.model.JApiClass;
+import japicmp.model.jsf.JsfComponent;
 import japicmp.output.stdout.StdoutOutputGenerator;
 import japicmp.output.xml.XmlOutputGenerator;
 import org.apache.maven.artifact.Artifact;
@@ -86,13 +88,15 @@ public class JApiCmpMojo extends AbstractMojo {
         File newVersionFile = retrieveFileFromConfiguration(newVersion, "newVersion");
         File oldVersionFile = retrieveFileFromConfiguration(oldVersion, "oldVersion");
         List<JApiClass> jApiClasses = compareArchives(newVersionFile, oldVersionFile);
+        JsfArchiveComparator jsfArchiveComparator = new JsfArchiveComparator();
+        List<JsfComponent> jsfComponents = jsfArchiveComparator.compare(oldVersionFile, newVersionFile, jApiClasses);
         if (projectBuildDir != null && projectBuildDir.exists()) {
             try {
                 File jApiCmpBuildDir = createJapiCmpBaseDir();
                 Options options = createOptions();
                 String diffOutput = generateDiffOutput(newVersionFile, oldVersionFile, jApiClasses, options);
                 createFileAndWriteTo(diffOutput, jApiCmpBuildDir);
-                generateXmlOutput(newVersionFile, oldVersionFile, jApiClasses, jApiCmpBuildDir, options);
+                generateXmlOutput(newVersionFile, oldVersionFile, jApiClasses, jApiCmpBuildDir, options, jsfComponents);
                 breakBuildIfNecessary(jApiClasses);
             } catch (IOException e) {
                 throw new MojoFailureException(String.format("Failed to construct output directory: %s", e.getMessage()), e);
@@ -190,11 +194,11 @@ public class JApiCmpMojo extends AbstractMojo {
         return diffOutput;
     }
 
-    private void generateXmlOutput(File newVersionFile, File oldVersionFile, List<JApiClass> jApiClasses, File jApiCmpBuildDir, Options options) throws IOException {
+    private void generateXmlOutput(File newVersionFile, File oldVersionFile, List<JApiClass> jApiClasses, File jApiCmpBuildDir, Options options, List<JsfComponent> jsfComponents) throws IOException {
         XmlOutputGenerator xmlGenerator = new XmlOutputGenerator();
         options.setXmlOutputFile(Optional.of(jApiCmpBuildDir.getCanonicalPath() + File.separator + "japicmp.xml"));
 	    options.setHtmlOutputFile(Optional.of(jApiCmpBuildDir.getCanonicalPath() + File.separator + "japicmp.html"));
-        xmlGenerator.generate(oldVersionFile.getAbsolutePath(), newVersionFile.getAbsolutePath(), jApiClasses, options);
+        xmlGenerator.generate(oldVersionFile.getAbsolutePath(), newVersionFile.getAbsolutePath(), jApiClasses, options, jsfComponents);
     }
 
     private List<JApiClass> compareArchives(File newVersionFile, File oldVersionFile) {
