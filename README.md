@@ -314,3 +314,8 @@ The following projects have related goals:
 * [Java API Compliance Checker](http://ispras.linuxbase.org/index.php/Java_API_Compliance_Checker): A Perl script that uses javap to compare two jar archives. This approach cannot compare annotations and requires an installation of Perl.
 * [Clirr](http://clirr.sourceforge.net/): A tool written in Java that compares two libraries for binary compatibility. Tracking of API changes is implemented only partially, tracking of annotations is not supported.
 * [JDiff](http://javadiff.sourceforge.net/): A Javadoc doclet that generates an HTML report of all API changes. The source code for both versions has to be available, the differences are not distinguished between binary incompatible or not. Comparison of annotations is not supported.
+
+##Resources##
+
+* [japicmp @ OpenHub](https://www.openhub.net/p/japicmp)
+* [japicmp @ Travic-CI](https://travis-ci.org/siom79/japicmp)
