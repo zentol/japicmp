@@ -99,6 +99,9 @@
                     <xsl:if test="count(classes/class) > 0">
                         <li><a href="#toc">Classes</a></li>
                     </xsl:if>
+                    <xsl:if test="count(jsf-components/jsf-component) > 0">
+                        <li><a href="#toc-jsf-components">JSF-Components</a></li>
+                    </xsl:if>
                 </ul>
 				<xsl:apply-templates />
 			</body>
@@ -595,5 +598,59 @@
                 (!)
             </xsl:if>
         </span>
+    </xsl:template>
+
+    <xsl:template match="jsf-components">
+        <div class="toc">
+            <a name="toc-jsf-components"/>
+            <span class="label">JSF-Components:</span>
+            <table>
+                <thead>
+                    <tr>
+                        <td>Status</td>
+                        <td>Fully Qualified Name</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <xsl:apply-templates select="jsf-component" mode="toc"><xsl:sort select="@fullyQualifiedName"/></xsl:apply-templates>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <xsl:apply-templates select="jsf-component" mode="detail"><xsl:sort select="@fullyQualifiedName"/></xsl:apply-templates>
+        </div>
+    </xsl:template>
+
+    <xsl:template match="jsf-component" mode="toc">
+        <tr>
+            <td>
+                <xsl:call-template name="outputChangeStatus"/>
+            </td>
+            <td>
+                <a>
+                    <xsl:attribute name="href">#jsf-component_<xsl:value-of select="@fullyQualifiedName"/></xsl:attribute>
+                    <xsl:value-of select="@fullyQualifiedName" />
+                </a>
+            </td>
+        </tr>
+    </xsl:template>
+
+    <xsl:template match="jsf-component" mode="detail">
+        <div>
+            <div class="class">
+                <div class="class_header">
+                    <span class="label">
+                        <a>
+                            <xsl:attribute name="name">
+                                jsf-component_<xsl:value-of select="@fullyQualifiedName" />
+                            </xsl:attribute>
+                        </a>
+                        <xsl:call-template name="outputChangeStatus"/>&#160;
+                        <xsl:value-of select="@fullyQualifiedName" />
+                    </span>
+                    <a href="#toc" class="toc_link">top</a>
+                </div>
+            </div>
+        </div>
     </xsl:template>
 </xsl:stylesheet>

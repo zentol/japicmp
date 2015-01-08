@@ -1,21 +1,25 @@
 package japicmp.cli;
 
 import com.google.common.base.Optional;
+
 import io.airlift.command.Command;
 import io.airlift.command.HelpOption;
 import io.airlift.command.Option;
 import japicmp.cmp.JarArchiveComparator;
 import japicmp.cmp.JarArchiveComparatorOptions;
+import japicmp.cmp.jsf.JsfArchiveComparator;
 import japicmp.config.Options;
 import japicmp.exception.FormattedException;
 import japicmp.exception.JApiCmpException;
 import japicmp.model.AccessModifier;
 import japicmp.model.JApiClass;
+import japicmp.model.jsf.JsfComponent;
 import japicmp.output.OutputFilter;
 import japicmp.output.stdout.StdoutOutputGenerator;
 import japicmp.output.xml.XmlOutputGenerator;
 
 import javax.inject.Inject;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -60,7 +64,9 @@ public class JApiCli {
 			verifyFiles(oldArchive, newArchive);
 			JarArchiveComparator jarArchiveComparator = new JarArchiveComparator(copyOptions(options));
 			List<JApiClass> jApiClasses = jarArchiveComparator.compare(oldArchive, newArchive);
-			generateOutput(options, oldArchive, newArchive, jApiClasses);
+			JsfArchiveComparator jsfArchiveComparator = new JsfArchiveComparator();
+			List<JsfComponent> jsfComponents = jsfArchiveComparator.compare(oldArchive, newArchive, jApiClasses);
+			generateOutput(options, oldArchive, newArchive, jApiClasses, jsfComponents);
 		}
 
 		private JarArchiveComparatorOptions copyOptions(Options options) {
@@ -71,11 +77,11 @@ public class JApiCli {
 			return comparatorOptions;
 		}
 
-		private void generateOutput(Options options, File oldArchive, File newArchive, List<JApiClass> jApiClasses) {
+		private void generateOutput(Options options, File oldArchive, File newArchive, List<JApiClass> jApiClasses, List<JsfComponent> jsfComponents) {
 			OutputFilter.sortClassesAndMethods(jApiClasses);
 			if (options.getXmlOutputFile().isPresent() || options.getHtmlOutputFile().isPresent()) {
 				XmlOutputGenerator xmlGenerator = new XmlOutputGenerator();
-				xmlGenerator.generate(oldArchive.getAbsolutePath(), newArchive.getAbsolutePath(), jApiClasses, options);
+				xmlGenerator.generate(oldArchive.getAbsolutePath(), newArchive.getAbsolutePath(), jApiClasses, options, jsfComponents);
 			}
 			StdoutOutputGenerator stdoutOutputGenerator = new StdoutOutputGenerator(options);
 			String output = stdoutOutputGenerator.generate(oldArchive, newArchive, jApiClasses);

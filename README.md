@@ -47,6 +47,12 @@ This approach also detects changes in instrumented and generated classes. You ca
 
 [melix](https://github.com/melix) has developed a [gradle plugin](https://github.com/melix/japicmp-gradle-plugin) for japicmp.
 
+##Requirements##
+
+japicmp is compiled with JDK 1.7, hence you should run it with a JRE >= 1.7. It can compare jar files that are compiled with JDK >= 1.5.
+
+The maven plugin requires maven in version >= 3.1.x.
+
 ##Tools##
 
 ###Usage CLI tool###
@@ -308,3 +314,8 @@ The following projects have related goals:
 * [Java API Compliance Checker](http://ispras.linuxbase.org/index.php/Java_API_Compliance_Checker): A Perl script that uses javap to compare two jar archives. This approach cannot compare annotations and requires an installation of Perl.
 * [Clirr](http://clirr.sourceforge.net/): A tool written in Java that compares two libraries for binary compatibility. Tracking of API changes is implemented only partially, tracking of annotations is not supported.
 * [JDiff](http://javadiff.sourceforge.net/): A Javadoc doclet that generates an HTML report of all API changes. The source code for both versions has to be available, the differences are not distinguished between binary incompatible or not. Comparison of annotations is not supported.
+
+##Resources##
+
+* [japicmp @ OpenHub](https://www.openhub.net/p/japicmp)
+* [japicmp @ Travic-CI](https://travis-ci.org/siom79/japicmp)
