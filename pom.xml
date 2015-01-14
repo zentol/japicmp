@@ -11,7 +11,7 @@
 
     <groupId>com.github.siom79.japicmp</groupId>
     <artifactId>japicmp-base</artifactId>
-    <version>0.2.3-SNAPSHOT</version>
+    <version>0.2.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>japicmp-base</name>
@@ -58,6 +58,12 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.stefanbirkner</groupId>
+            <artifactId>system-rules</artifactId>
+            <version>1.7.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -90,9 +96,6 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
-                        <configuration>
-                            <!-- <additionalparam>-Xdoclint:none</additionalparam> -->
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -192,6 +195,23 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+           <id>doclint-java8-disabled</id>
+           <activation>
+              <jdk>[1.8,)</jdk>
+           </activation>
+           <build>
+              <plugins>
+                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <configuration>
+                       <additionalparam>-Xdoclint:none</additionalparam>
+                    </configuration>
+                 </plugin>
+              </plugins>
+           </build>
         </profile>
     </profiles>
 </project>

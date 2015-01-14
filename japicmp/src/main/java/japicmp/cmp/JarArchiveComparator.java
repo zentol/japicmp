@@ -18,14 +18,17 @@ import java.util.logging.Logger;
 
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.NotFoundException;
 
 public class JarArchiveComparator {
     private static final Logger logger = Logger.getLogger(JarArchiveComparator.class.getName());
-    private static final ClassPool classPool = new ClassPool();
+    private final ClassPool classPool = new ClassPool();
+    private String classPath = "";
     private JarArchiveComparatorOptions options;
 
     public JarArchiveComparator(JarArchiveComparatorOptions options) {
         this.options = options;
+        setupClasspath();
     }
 
     public List<JApiClass> compare(File oldArchive, File newArchive) {
@@ -33,6 +36,26 @@ public class JarArchiveComparator {
         List<JApiClass> classList = classesComparator.getClasses();
         checkBinaryCompatibility(classList);
 		return classList;
+    }
+
+    private void setupClasspath() {
+        classPool.appendSystemPath();
+        classPath += System.getProperty("java.class.path");
+        for (String classPathEntry : options.getClassPathEntries()) {
+            try {
+                classPool.appendClassPath(classPathEntry);
+                if (!classPath.endsWith(File.pathSeparator)) {
+                    classPath += File.pathSeparator;
+                }
+                classPath += classPathEntry;
+            } catch (NotFoundException e) {
+                throw new JApiCmpException(Reason.ClassLoading, "Could not find class path entry '" + classPathEntry + "': " + e.getMessage(), e);
+            }
+        }
+    }
+
+    public String getClasspath() {
+        return classPath;
     }
 
     private void checkBinaryCompatibility(List<JApiClass> classList) {
@@ -43,7 +66,7 @@ public class JarArchiveComparator {
 	private ClassesComparator compareClassLists(File oldArchive, File newArchive, ClassPool classPool, JarArchiveComparatorOptions options) {
         List<CtClass> oldClasses = createListOfCtClasses(oldArchive, classPool, options);
         List<CtClass> newClasses = createListOfCtClasses(newArchive, classPool, options);
-        ClassesComparator classesComparator = new ClassesComparator();
+        ClassesComparator classesComparator = new ClassesComparator(this);
         classesComparator.compare(oldClasses, newClasses);
         if (logger.isLoggable(Level.FINE)) {
             for (JApiClass jApiClass : classesComparator.getClasses()) {
@@ -102,5 +125,9 @@ public class JarArchiveComparator {
             return false;
         }
         return true;
+    }
+
+    public JarArchiveComparatorOptions getJarArchiveComparatorOptions() {
+        return this.options;
     }
 }

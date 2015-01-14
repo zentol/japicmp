@@ -2,7 +2,7 @@
 
 japicmp is a tool to compare two versions of a jar archive:
 
-	java -jar japicmp-0.2.2.jar -n new-version.jar -o old-version.jar
+	java -jar japicmp-0.2.3-jar-with-dependencies.jar -n new-version.jar -o old-version.jar
 
 It can also be used as a library:
 
@@ -15,7 +15,7 @@ japicmp is available in the Maven Central Repository. The corresponding dependen
 	<dependency>
 		<groupId>com.github.siom79.japicmp</groupId>
 		<artifactId>japicmp</artifactId>
-		<version>0.2.2</version>
+		<version>0.2.3</version>
 	</dependency>
 
 ##Motivation##
@@ -29,9 +29,11 @@ This library does not use the Java Reflection API to compute the differences, as
 it necessary to include all classes the jar archive under investigation depends on are available on the classpath. 
 To prevent the inclusion of all dependencies, which can be a lot of work for bigger applications, this library makes 
 use of the [javassist](http://www.csg.ci.i.u-tokyo.ac.jp/~chiba/javassist/) library to inspect the class files. 
-This way you only have to provide the two jar archives on the command line, that's it.
+This way you only have to provide the two jar archives on the command line (and eventually libraries that contain
+classes/interfaces you have extended/implemented).
 
-This approach also detects changes in instrumented and generated classes. You can even evaluate changes in class file attributes (like synthetic) or annotations. The comparison of annotations makes this approach suitable for annotation-based APIs like JAXB, JPA, JAX-RS, etc.
+This approach also detects changes in instrumented and generated classes. You can even evaluate changes in class file attributes (like synthetic) or annotations.
+The comparison of annotations makes this approach suitable for annotation-based APIs like JAXB, JPA, JAX-RS, etc.
 
 ##Features##
 
@@ -103,6 +105,11 @@ japicmp has a set of CLI parameters that are described in the following:
 
 			-x <pathToXmlOutputFile>, --xml-file <pathToXmlOutputFile>
 				Provides the path to the xml output file.
+
+When your library under investigation implements interfaces or extends classes from other libraries than the JDK, you will
+have to add these to the class path:
+
+	java -cp japicmp-0.2.3-SNAPSHOT-jar-with-dependencies.jar;otherLibrary.jar japicmp.JApiCmp -n new-version.jar -o old-version.jar
     
 ###Usage maven plugin###
 
@@ -113,13 +120,13 @@ The maven plugin can be included in the pom.xml file of your artifact in the fol
             <plugin>
                 <groupId>com.github.siom79.japicmp</groupId>
                 <artifactId>japicmp-maven-plugin</artifactId>
-                <version>0.2.2</version>
+                <version>0.2.3</version>
                 <configuration>
                     <oldVersion>
                         <dependency>
                             <groupId>japicmp</groupId>
                             <artifactId>japicmp-test-v1</artifactId>
-                            <version>0.2.2</version>
+                            <version>0.2.3</version>
                         </dependency>
                     </oldVersion>
                     <newVersion>
@@ -135,6 +142,13 @@ The maven plugin can be included in the pom.xml file of your artifact in the fol
                         <breakBuildOnModifications>false</breakBuildOnModifications>
                         <breakBuildOnBinaryIncompatibleModifications>false</breakBuildOnBinaryIncompatibleModifications>
                     </parameter>
+					<dependencies>
+						<dependency>
+							<groupId>org.apache.commons</groupId>
+							<artifactId>commons-math3</artifactId>
+							<version>3.4</version>
+						</dependency>
+					</dependencies>
                 </configuration>
                 <executions>
                     <execution>
@@ -157,6 +171,19 @@ The elements &lt;oldVersion&gt; and &lt;newVersion&gt; elements let you specify 
 * accessModifier: Sets the access modifier level (public, package, protected, private).
 * breakBuildOnModifications: When set to true, the build breaks in case a modification has been detected.
 * breakBuildOnBinaryIncompatibleModifications: When set to true, the build breaks in case a binary incompatible modification has been detected.
+
+If your library implements interfaces or extends classes from other libraries than the JDK, you can add these dependencies by using the
+&lt;dependencies&gt; element. The &lt;systemPath&gt; element of the &lt;dependency&gt; element allows you to add local files as a dependency:
+
+```
+<dependency>
+	<groupId>com.sun</groupId>
+	<artifactId>tools</artifactId>
+	<version>1.4.2</version>
+	<scope>system</scope>
+	<systemPath>${java.home}/../lib/tools.jar</systemPath>
+</dependency>
+```
 
 The maven plugin produces the two files japicmp.diff and japicmp.xml within the directory ${project.build.directory}/japicmp
 of your artifact.
@@ -277,6 +304,9 @@ As can bee seen from the output above, the XML attributes title and author have 
 
 The following releases are available:
 
+* [Version 0.2.3](https://github.com/siom79/japicmp/releases/tag/japicmp-base-0.2.3)
+	* Changes:
+		* [Fails to recognize changed interfaces](https://github.com/siom79/japicmp/issues/12)
 * [Version 0.2.2](https://github.com/siom79/japicmp/releases/tag/japicmp-base-0.2.2)
 	* Changes:
 		* [japicmp should provide a single page HTML report](https://github.com/siom79/japicmp/issues/18)

@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.github.siom79.japicmp</groupId>
         <artifactId>japicmp-testbase</artifactId>
-        <version>0.2.3-SNAPSHOT</version>
+        <version>0.2.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>japicmp-test-v2</artifactId>
@@ -28,6 +28,21 @@
                             <path>${project.build.directory}/${project.artifactId}-${project.version}.jar</path>
                         </file>
                     </newVersion>
+                    <parameter>
+                        <accessModifier>public</accessModifier>
+                    </parameter>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-math3</artifactId>
+                            <version>3.4</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>javax</groupId>
+                            <artifactId>javaee-api</artifactId>
+                            <version>6.0</version>
+                        </dependency>
+                    </dependencies>
                 </configuration>
                 <executions>
                     <execution>
@@ -46,6 +61,11 @@
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
             <version>6.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.4</version>
         </dependency>
     </dependencies>
 </project>
