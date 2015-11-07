@@ -276,4 +276,12 @@ public class JarArchiveComparator {
 	public ClassPool getCommonClassPool() {
 		return commonClassPool;
 	}
+
+	/**
+	 * Returns the {@link ExecutorService} used by this comparator.
+	 * @return the {@link ExecutorService} used by this comparator
+     */
+	ExecutorService getExecutorService() {
+		return executorService;
+	}
 }

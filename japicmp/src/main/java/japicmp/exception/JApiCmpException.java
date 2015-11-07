@@ -15,6 +15,7 @@ public class JApiCmpException extends RuntimeException {
 		JaxbException,
 		ClassLoading,
 		IllegalState,
+		InterruptedException,
 		XsltError
 	}
 
