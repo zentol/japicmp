@@ -12,7 +12,9 @@ import javassist.NotFoundException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
@@ -23,13 +25,15 @@ import java.util.logging.Logger;
  */
 public class JarArchiveComparator {
     private static final Logger LOGGER = Logger.getLogger(JarArchiveComparator.class.getName());
-    private ClassPool commonClassPool;
+	private final ExecutorService executorService;
+	private ClassPool commonClassPool;
 	private ClassPool oldClassPool;
 	private ClassPool newClassPool;
 	private String commonClassPathAsString = "";
 	private String oldClassPathAsString = "";
     private String newClassPathAsString = "";
     private JarArchiveComparatorOptions options;
+	private Statistics statistics = new Statistics();
 
     /**
      * Constructs an instance of this class and performs a setup of the classpath
@@ -37,7 +41,8 @@ public class JarArchiveComparator {
      */
     public JarArchiveComparator(JarArchiveComparatorOptions options) {
         this.options = options;
-        setupClasspaths();
+		this.executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		setupClasspaths();
     }
 
     /**
@@ -59,7 +64,19 @@ public class JarArchiveComparator {
 	 * @throws JApiCmpException if the comparison fails
 	 */
 	public List<JApiClass> compare(List<File> oldArchives, List<File> newArchives) {
-		return createAndCompareClassLists(oldArchives, newArchives);
+		statistics = new Statistics();
+		long startMillis = System.currentTimeMillis();
+		List<JApiClass> jApiClasses = createAndCompareClassLists(oldArchives, newArchives);
+		statistics.setComputationTimeInMillis(System.currentTimeMillis() - startMillis);
+		return jApiClasses;
+	}
+
+	/**
+	 * Returns a {@link Statistics} object describing the latest comparison.
+	 * @return a {@link Statistics} object describing the latest comparison
+     */
+	public Statistics getStatistics() {
+		return statistics;
 	}
 
 	private void checkJavaObjectSerializationCompatibility(List<JApiClass> jApiClasses) {
@@ -190,36 +207,54 @@ public class JarArchiveComparator {
         return newList;
     }
 
-    private List<CtClass> createListOfCtClasses(List<File> archives, ClassPool classPool) {
+    private List<CtClass> createListOfCtClasses(List<File> archives, final ClassPool classPool) {
 		List<CtClass> classes = new LinkedList<>();
-		for (File archive : archives) {
+		List<Future<List<CtClass>>> futures = new LinkedList<>();
+		for (final File archive : archives) {
 			if (LOGGER.isLoggable(Level.FINE)) {
 				LOGGER.fine("Loading classes from jar file '" + archive.getAbsolutePath() + "'");
 			}
-			try (JarFile jarFile = new JarFile(archive)) {
-				Enumeration<JarEntry> entryEnumeration = jarFile.entries();
-				while (entryEnumeration.hasMoreElements()) {
-					JarEntry jarEntry = entryEnumeration.nextElement();
-					String name = jarEntry.getName();
-					if (name.endsWith(".class")) {
-						CtClass ctClass;
-						try {
-							ctClass = classPool.makeClass(jarFile.getInputStream(jarEntry));
-						} catch (Exception e) {
-							throw new JApiCmpException(Reason.IoException, String.format("Failed to load file from jar '%s' as class file: %s.", name, e.getMessage()), e);
+			Future<List<CtClass>> future = this.executorService.submit(new Callable<List<CtClass>>() {
+				@Override
+				public List<CtClass> call() throws Exception {
+					List<CtClass> classes = new LinkedList<>();
+					try (JarFile jarFile = new JarFile(archive)) {
+						Enumeration<JarEntry> entryEnumeration = jarFile.entries();
+						while (entryEnumeration.hasMoreElements()) {
+							JarEntry jarEntry = entryEnumeration.nextElement();
+							String name = jarEntry.getName();
+							if (name.endsWith(".class")) {
+								CtClass ctClass;
+								try {
+									InputStream inputStream = jarFile.getInputStream(jarEntry);
+									ctClass = classPool.makeClass(inputStream); //classPool uses internally a Hashtable (i.e. is synchronized)
+								} catch (Exception e) {
+									throw new JApiCmpException(Reason.IoException, String.format("Failed to load file from jar '%s' as class file: %s.", name, e.getMessage()), e);
+								}
+								classes.add(ctClass);
+								if (LOGGER.isLoggable(Level.FINE)) {
+									LOGGER.fine(String.format("Adding class '%s' with jar name '%s' to list.", ctClass.getName(), name));
+								}
+							} else {
+								if (LOGGER.isLoggable(Level.FINE)) {
+									LOGGER.fine(String.format("Skipping file '%s' because filename does not end with '.class'.", name));
+								}
+							}
 						}
-						classes.add(ctClass);
-						if (LOGGER.isLoggable(Level.FINE)) {
-							LOGGER.fine(String.format("Adding class '%s' with jar name '%s' to list.", ctClass.getName(), name));
-						}
-					} else {
-						if (LOGGER.isLoggable(Level.FINE)) {
-							LOGGER.fine(String.format("Skipping file '%s' because filename does not end with '.class'.", name));
-						}
+					} catch (IOException e) {
+						throw new JApiCmpException(Reason.IoException, String.format("Processing of jar file %s failed: %s", archive.getAbsolutePath(), e.getMessage()), e);
 					}
+					return classes;
 				}
-			} catch (IOException e) {
-				throw new JApiCmpException(Reason.IoException, String.format("Processing of jar file %s failed: %s", archive.getAbsolutePath(), e.getMessage()), e);
+			});
+			futures.add(future);
+		}
+		for (Future<List<CtClass>> future : futures) {
+			try {
+				List<CtClass> ctClasses = future.get();
+				classes.addAll(ctClasses);
+			} catch (Exception e) {
+				throw new JApiCmpException(Reason.IoException, String.format("Processing of jar files failed: %s", e.getMessage()), e);
 			}
 		}
 		return classes;
