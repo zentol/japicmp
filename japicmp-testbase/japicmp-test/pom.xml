@@ -81,6 +81,22 @@
 									<outputDirectory>${project.build.directory}</outputDirectory>
 									<destFileName>japicmp-test2-v2.jar</destFileName>
 								</artifactItem>
+								<artifactItem>
+									<groupId>com.google.guava</groupId>
+									<artifactId>guava</artifactId>
+									<version>17.0</version>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+									<destFileName>guava-17.0.jar</destFileName>
+								</artifactItem>
+								<artifactItem>
+									<groupId>com.google.guava</groupId>
+									<artifactId>guava</artifactId>
+									<version>18.0</version>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+									<destFileName>guava-18.0.jar</destFileName>
+								</artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
