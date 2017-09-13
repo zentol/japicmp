@@ -98,8 +98,8 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <github.account>siom79</github.account>
         <github.project>japicmp</github.project>
-        <java.source>1.7</java.source>
-        <java.target>1.7</java.target>
+        <java.source>1.9</java.source>
+        <java.target>1.9</java.target>
 		<maven.site.plugin.skip>false</maven.site.plugin.skip>
 		<javassist.version>3.22.0-CR2</javassist.version>
 		<guava.version>18.0</guava.version>
@@ -153,7 +153,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+				<version>3.7.0</version>
                 <configuration>
                     <source>${java.source}</source>
                     <target>${java.target}</target>
@@ -172,7 +172,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>3.0.0-M1</version>
                 <configuration>
                   <quiet>true</quiet>
                 </configuration>
