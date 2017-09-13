@@ -4,11 +4,11 @@ import com.google.common.base.Optional;
 import io.airlift.airline.Command;
 import io.airlift.airline.HelpOption;
 import io.airlift.airline.Option;
+import japicmp.cmp.JApiCmpArchive;
 import japicmp.cmp.JarArchiveComparator;
 import japicmp.cmp.JarArchiveComparatorOptions;
 import japicmp.config.Options;
 import japicmp.exception.JApiCmpException;
-import japicmp.model.AccessModifier;
 import japicmp.model.JApiClass;
 import japicmp.output.semver.SemverOut;
 import japicmp.output.stdout.StdoutOutputGenerator;
@@ -20,6 +20,8 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static japicmp.model.AccessModifier.toModifier;
 
 public class JApiCli {
 	public static final String IGNORE_MISSING_CLASSES = "--ignore-missing-classes";
@@ -71,6 +73,10 @@ public class JApiCli {
 		public boolean noAnnotations = false;
 		@Option(name = "--report-only-filename", description = "Use just filename in report description.")
 		public boolean reportOnlyFilename;
+	        @Option(name = "--include-exclusively", description = "Include only packages specified in the \"include\" option, exclude their sub-packages")
+	        public boolean includeExclusively = false;
+	        @Option(name = "--exclude-exclusively", description = "Exclude only packages specified in the \"exclude\" option, include their sub-packages")
+	        public boolean excludeExclusively = false;
 
 		@Override
 		public void run() {
@@ -112,8 +118,8 @@ public class JApiCli {
 			options.setHtmlOutputFile(Optional.fromNullable(pathToHtmlOutputFile));
 			options.setOutputOnlyModifications(modifiedOnly);
 			options.setAccessModifier(toModifier(accessModifier));
-			options.addIncludeFromArgument(Optional.fromNullable(includes));
-			options.addExcludeFromArgument(Optional.fromNullable(excludes));
+			options.addIncludeFromArgument(Optional.fromNullable(includes), includeExclusively);
+			options.addExcludeFromArgument(Optional.fromNullable(excludes), excludeExclusively);
 			options.setOutputOnlyBinaryIncompatibleModifications(onlyBinaryIncompatibleModifications);
 			options.setIncludeSynthetic(includeSynthetic);
 			options.setIgnoreMissingClasses(ignoreMissingClasses);
@@ -129,16 +135,6 @@ public class JApiCli {
 			return options;
 		}
 
-		private List<File> createFileList(String option) {
-			String[] parts = option.split(";");
-			List<File> files = new ArrayList<>(parts.length);
-			for (String part : parts) {
-				File file = new File(part);
-				files.add(file);
-			}
-			return files;
-		}
-
 		private <T> T checkNonNull(T in, String errorMessage) {
 			if (in == null) {
 				throw new JApiCmpException(JApiCmpException.Reason.CliError, errorMessage);
@@ -146,19 +142,16 @@ public class JApiCli {
 				return in;
 			}
 		}
+	}
 
-		private Optional<AccessModifier> toModifier(String accessModifierArg) {
-			Optional<String> stringOptional = Optional.fromNullable(accessModifierArg);
-			if (stringOptional.isPresent()) {
-				try {
-					return Optional.of(AccessModifier.valueOf(stringOptional.get().toUpperCase()));
-				} catch (IllegalArgumentException e) {
-					throw new JApiCmpException(JApiCmpException.Reason.CliError, String.format("Invalid value for option -a: %s. Possible values are: %s.",
-						accessModifierArg, AccessModifier.listOfAccessModifier()));
-				}
-			} else {
-				return Optional.of(AccessModifier.PROTECTED);
-			}
+	public static List<JApiCmpArchive> createFileList(String option) {
+		String[] parts = option.split(";");
+		List<JApiCmpArchive> jApiCmpArchives = new ArrayList<>(parts.length);
+		for (String part : parts) {
+			File file = new File(part);
+			JApiCmpArchive jApiCmpArchive = new JApiCmpArchive(file, "n.a.");
+			jApiCmpArchives.add(jApiCmpArchive);
 		}
+		return jApiCmpArchives;
 	}
 }

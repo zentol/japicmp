@@ -112,11 +112,11 @@ public class CompatibilityChanges {
 								if (field.getStaticModifier().getNewModifier().isPresent() && field.getStaticModifier().getNewModifier().get() == StaticModifier.STATIC) {
 									subclassFieldIsStatic = true;
 								}
-								if (superclassField.getStaticModifier().getNewModifier().isPresent() && superclassField.getStaticModifier().getNewModifier().get() == StaticModifier.STATIC) {
+								if (superclassField.getStaticModifier().getNewModifier().isPresent() && superclassField.getStaticModifier().getNewModifier().get() == StaticModifier.STATIC && superclassField.getChangeStatus() != JApiChangeStatus.NEW) {
 									superclassFieldIsStatic = true;
 								}
 								if (field.getAccessModifier().getNewModifier().isPresent() && superclassField.getAccessModifier().getNewModifier().isPresent()) {
-									if (field.getAccessModifier().getNewModifier().get().getLevel() < superclassField.getAccessModifier().getNewModifier().get().getLevel()) {
+									if (field.getAccessModifier().getNewModifier().get().getLevel() < superclassField.getAccessModifier().getNewModifier().get().getLevel() && superclassField.getChangeStatus() != JApiChangeStatus.NEW) {
 										accessModifierSubclassLess = true;
 									}
 								}
@@ -178,7 +178,7 @@ public class CompatibilityChanges {
 				if (superclassJApiClassOptional.isPresent()) {
 					foundClass = superclassJApiClassOptional.get();
 				} else {
-					foundClass = loadClass(newSuperclassName);
+					foundClass = loadClass(newSuperclassName, EnumSet.of(Classpath.NEW_CLASSPATH));
 					evaluate(Collections.singletonList(foundClass));
 				}
 				classMap.put(foundClass.getFullyQualifiedName(), foundClass);
@@ -189,7 +189,12 @@ public class CompatibilityChanges {
 		}
 	}
 
-	private JApiClass loadClass(String newSuperclassName) {
+	private enum Classpath {
+		OLD_CLASSPATH,
+		NEW_CLASSPATH
+	}
+
+	private JApiClass loadClass(String newSuperclassName, EnumSet<Classpath> classpaths) {
 		JApiClass foundClass;
 		Optional<CtClass> oldClassOptional = Optional.absent();
 		Optional<CtClass> newClassOptional = Optional.absent();
@@ -211,20 +216,24 @@ public class CompatibilityChanges {
 				}
 			}
 		} else {
-			ClassPool oldClassPool = this.jarArchiveComparator.getOldClassPool();
-			ClassPool newClassPool = this.jarArchiveComparator.getNewClassPool();
-			try {
-				oldClassOptional = Optional.of(oldClassPool.get(newSuperclassName));
-			} catch (NotFoundException e) {
-				if (!this.jarArchiveComparator.getJarArchiveComparatorOptions().getIgnoreMissingClasses().ignoreClass(e.getMessage())) {
-					throw JApiCmpException.forClassLoading(e, newSuperclassName, this.jarArchiveComparator);
+			if (classpaths.contains(Classpath.OLD_CLASSPATH)) {
+				ClassPool oldClassPool = this.jarArchiveComparator.getOldClassPool();
+				try {
+					oldClassOptional = Optional.of(oldClassPool.get(newSuperclassName));
+				} catch (NotFoundException e) {
+					if (!this.jarArchiveComparator.getJarArchiveComparatorOptions().getIgnoreMissingClasses().ignoreClass(e.getMessage())) {
+						throw JApiCmpException.forClassLoading(e, newSuperclassName, this.jarArchiveComparator);
+					}
 				}
 			}
-			try {
-				newClassOptional = Optional.of(newClassPool.get(newSuperclassName));
-			} catch (NotFoundException e) {
-				if (!this.jarArchiveComparator.getJarArchiveComparatorOptions().getIgnoreMissingClasses().ignoreClass(e.getMessage())) {
-					throw JApiCmpException.forClassLoading(e, newSuperclassName, this.jarArchiveComparator);
+			if (classpaths.contains(Classpath.NEW_CLASSPATH)) {
+				ClassPool newClassPool = this.jarArchiveComparator.getNewClassPool();
+				try {
+					newClassOptional = Optional.of(newClassPool.get(newSuperclassName));
+				} catch (NotFoundException e) {
+					if (!this.jarArchiveComparator.getJarArchiveComparatorOptions().getIgnoreMissingClasses().ignoreClass(e.getMessage())) {
+						throw JApiCmpException.forClassLoading(e, newSuperclassName, this.jarArchiveComparator);
+					}
 				}
 			}
 		}
@@ -459,7 +468,7 @@ public class CompatibilityChanges {
 
 	private void checkIfExceptionIsNowChecked(JApiMethod method) {
 		for (JApiException exception : method.getExceptions()) {
-			if (exception.getChangeStatus() == JApiChangeStatus.NEW && exception.isCheckedException()) {
+			if (exception.getChangeStatus() == JApiChangeStatus.NEW && exception.isCheckedException() && method.getChangeStatus() != JApiChangeStatus.NEW) {
 				addCompatibilityChange(method, JApiCompatibilityChange.METHOD_NOW_THROWS_CHECKED_EXCEPTION);
 			}
 		}
@@ -501,11 +510,9 @@ public class CompatibilityChanges {
 	private void checkIfSuperclassesOrInterfacesChangedIncompatible(final JApiClass jApiClass, Map<String, JApiClass> classMap) {
 		final JApiSuperclass superclass = jApiClass.getSuperclass();
 		// section 13.4.4 of "Java Language Specification" SE7
-		if (superclass.getChangeStatus() == JApiChangeStatus.REMOVED) {
-			if (jApiClass.getChangeStatus() != JApiChangeStatus.REMOVED) { //If class is removed, superclass is also removed. But this is not incompatible.
-				addCompatibilityChange(superclass, JApiCompatibilityChange.SUPERCLASS_REMOVED);
-			}
-		} else if (superclass.getChangeStatus() == JApiChangeStatus.UNCHANGED || superclass.getChangeStatus() == JApiChangeStatus.MODIFIED) {
+		if (superclass.getChangeStatus() == JApiChangeStatus.UNCHANGED
+			|| superclass.getChangeStatus() == JApiChangeStatus.MODIFIED
+			|| superclass.getChangeStatus() == JApiChangeStatus.REMOVED) {
 			final List<JApiMethod> implementedMethods = new ArrayList<>();
 			final List<JApiMethod> removedAndNotOverriddenMethods = new ArrayList<>();
 			final List<JApiField> fields = new ArrayList<>();
@@ -584,7 +591,25 @@ public class CompatibilityChanges {
 					} else if (superClassChangedFromObject) {
 						addCompatibilityChange(superclass, JApiCompatibilityChange.SUPERCLASS_ADDED);
 					} else {
-						addCompatibilityChange(superclass, JApiCompatibilityChange.SUPERCLASS_CHANGED);
+						// check if the old superclass is still an ancestor of the new superclass
+						List<JApiSuperclass> ancestors = new ArrayList<>();
+						final List<JApiSuperclass> matchingAncestors = new ArrayList<>();
+						forAllSuperclasses(jApiClass, classMap, ancestors, new OnSuperclassCallback<JApiSuperclass>() {
+							@Override
+							public JApiSuperclass callback(JApiClass clazz, Map<String, JApiClass> classMap, JApiChangeStatus changeStatusOfSuperclass) {
+								JApiSuperclass ancestor = clazz.getSuperclass();
+								if (ancestor.getNewSuperclassName().isPresent() && ancestor.getNewSuperclassName().get().equals(superclass.getOldSuperclassName().get())) {
+									matchingAncestors.add(ancestor);
+								}
+								return ancestor;
+							}
+						});
+						if (matchingAncestors.isEmpty()) {
+							addCompatibilityChange(superclass, JApiCompatibilityChange.SUPERCLASS_REMOVED);
+						} else {
+							// really, superclass(es) inserted - but the old superclass is still an ancestor
+							addCompatibilityChange(superclass, JApiCompatibilityChange.SUPERCLASS_ADDED);
+						}
 					}
 				}
 			} else {
@@ -602,7 +627,7 @@ public class CompatibilityChanges {
 			} else {
 				JApiClass interfaceClass = classMap.get(implementedInterface.getFullyQualifiedName());
 				if (interfaceClass == null) {
-					interfaceClass = loadClass(implementedInterface.getFullyQualifiedName());
+					interfaceClass = loadClass(implementedInterface.getFullyQualifiedName(), EnumSet.allOf(Classpath.class));
 				}
 				if (implementedInterface.getChangeStatus() == JApiChangeStatus.MODIFIED || implementedInterface.getChangeStatus() == JApiChangeStatus.UNCHANGED) {
 					implementedInterface.setJApiClass(interfaceClass);
@@ -705,7 +730,7 @@ public class CompatibilityChanges {
 				String fullyQualifiedName = jApiImplementedInterface.getFullyQualifiedName();
 				JApiClass foundClass = classMap.get(fullyQualifiedName);
 				if (foundClass == null) {
-					foundClass = loadClass(fullyQualifiedName);
+					foundClass = loadClass(fullyQualifiedName, EnumSet.allOf(Classpath.class));
 				}
 				for (JApiMethod method : foundClass.getMethods()) {
 					boolean isImplemented = false;

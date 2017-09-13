@@ -2,10 +2,46 @@
 
 The following versions of japicmp are available:
 
+##0.10.0 (2017-04-02)##
+
+* The maven plugin relaxes the semantic versioning check for 0.x.x versions, it can be enabled with the option breakBuildBasedOnSemanticVersioningForMajorVersionZero. [#165](https://github.com/siom79/japicmp/issues/165)
+* The XML report contains now the old and new version of the two archives compared. [#164](https://github.com/siom79/japicmp/issues/164)
+* The maven plugin execution can be skipped using a CLI property (-Djapicmp.skip=true).
+* Removed unnecessary XML element titleOptional from report. [#161](https://github.com/siom79/japicmp/issues/161)
+* SemverOut now returns 0.0.0 in case no JApiClass(es) are there. [#162](https://github.com/siom79/japicmp/issues/162)
+* Method throwing in new version RuntimeException is no longer reported to be source incompatible. [#167](https://github.com/siom79/japicmp/issues/167)
+
+Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.siom79.japicmp%22%20AND%20v%3A%220.10.0%22).
+
+
+##0.9.4 (2017-02-16)##
+
+* exclude option now also works for inner classes and methods/fields of inner classes. [#157](https://github.com/siom79/japicmp/issues/157)
+* Added threadSafe=true to @Mojo annotation to suppress @threadSafe warning in parallel builds. [#158](https://github.com/siom79/japicmp/issues/158)
+* The automatic detection of old version does no longer only compares the qualifier with SNAPSHOT but checks if it ends with SNAPSHOT. [#160](https://github.com/siom79/japicmp/issues/160)
+
+Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.siom79.japicmp%22%20AND%20v%3A%220.9.4%22).
+
+##0.9.3 (2016-11-27)##
+
+* Added new parameters includeModules and excludeModules to maven plugin. [#154](https://github.com/siom79/japicmp/issues/154)
+* Do not break build if breakBuildBasedOnSemanticVersioning=true and ignoreMissingOldVersion=true and old version missing. [#153](https://github.com/siom79/japicmp/issues/153)
+* FIELD_STATIC_AND_OVERRIDES_STATIC and FIELD_LESS_ACCESSIBLE_THAN_IN_SUPERCLASS should not be reported in case field in superclass is also new. [#154](https://github.com/siom79/japicmp/issues/154)
+* Cover more edit operations on class and interface inheritance hierarchies. [#155](https://github.com/siom79/japicmp/issues/155)
+
+Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.siom79.japicmp%22%20AND%20v%3A%220.9.3%22).
+
+##0.9.2 (2016-11-07)##
+
+* Illegal characters are removed from filename of diff report. [#152](https://github.com/siom79/japicmp/issues/152)
+* If method is new, new checked exception is not considered as source incompatible. [#151](https://github.com/siom79/japicmp/issues/151)
+
+Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.siom79.japicmp%22%20AND%20v%3A%220.9.2%22).
+
 ##0.9.1 (2016-09-28)##
 
-* Added new option reportOnlyFilename. [#144](https://github.com/siom79/japicmp/pull/144)
-* Added new parameter ignoreMissingNewVersion. [#148](https://github.com/siom79/japicmp/pull/148)
+* Added new option reportOnlyFilename. [#144](https://github.com/siom79/japicmp/issues/144)
+* Added new parameter ignoreMissingNewVersion. [#148](https://github.com/siom79/japicmp/issues/148)
 * Reworked CompatibilityChanges.forAllSuperclasses() such that evaluate() cannot be called recursively. [#146](https://github.com/siom79/japicmp/pull/146)
 
 Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.siom79.japicmp%22%20AND%20v%3A%220.9.1%22).
@@ -65,7 +101,7 @@ Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22c
 * japicmp now also supports tracking of source incompatible changes. [#59](https://github.com/siom79/japicmp/issues/59)
 * The XML report now also outputs the reason for each change for better traceability. [#105](https://github.com/siom79/japicmp/issues/105)
 * The maven plugin comes now with the new option `breakBuildBasedOnSemanticVersioning` that breaks the build based on the version numbers of the old and new archive(s) assuming they are using semantic versioning. [#108](https://github.com/siom79/japicmp/issues/108)
-* The maven plugin now has a new option `packagingSupported` that lets you define for which packaging types the plugin shoule be invoked. This is useful when the plugin is defined in the root pom and should be executed for all submodules, but you want to exclude some of these submodules by packaging type. [#100](https://github.com/siom79/japicmp/pull/100)
+* The maven plugin now has a new option `packagingSupported` that lets you define for which packaging types the plugin should be invoked. This is useful when the plugin is defined in the root pom and should be executed for all submodules, but you want to exclude some of these submodules by packaging type. [#100](https://github.com/siom79/japicmp/pull/100)
 * Fixed NPE in JavadocLikePackageFilter when matching against classes in the default (empty) package. [#106](https://github.com/siom79/japicmp/pull/106)
 
 Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.siom79.japicmp%22%20AND%20v%3A%220.7.0%22).
@@ -129,7 +165,7 @@ Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22c
 
 ##0.5.0 (2015-05-26)##
 
-* The parameters `--exclude` and `--include` have been extended such that next to packages now also classes, methods and fields can be excluded or only included. The syntax is similiar to the one used for javadoc references: `package.to.include;package.ClassToInclude;package.Class#methodToInclude();package.Class#fieldToInclude`. Please note that the separator char has changed from `,` to `;`. This was necessary as the `,` is now used to separate the arguments for a method in `package.Class#methodWithParams(long,int)` ([#51](https://github.com/siom79/japicmp/issues/51)).
+* The parameters `--exclude` and `--include` have been extended such that next to packages now also classes, methods and fields can be excluded or only included. The syntax is similar to the one used for javadoc references: `package.to.include;package.ClassToInclude;package.Class#methodToInclude();package.Class#fieldToInclude`. Please note that the separator char has changed from `,` to `;`. This was necessary as the `,` is now used to separate the arguments for a method in `package.Class#methodWithParams(long,int)` ([#51](https://github.com/siom79/japicmp/issues/51)).
 * Parameters classes for methods with the same name but different signatures are no longer resolved through the classpath ([#55](https://github.com/siom79/japicmp/issues/55)).
 
 Available at [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.siom79.japicmp%22%20AND%20v%3A%220.5.0%22).

@@ -85,7 +85,8 @@ public class XmlOutputGenerator extends OutputGenerator<XmlOutput> {
 		} finally {
 			try {
 				xmlOutput.close();
-			} catch (Exception ignored) {
+			} catch (Exception e) {
+				LOGGER.log(Level.FINE, "Failed to close XML file: " + e.getLocalizedMessage(), e);
 			}
 		}
 		return filesWritten;
@@ -170,7 +171,8 @@ public class XmlOutputGenerator extends OutputGenerator<XmlOutput> {
 				if (xsltAsInputStream != null) {
 					xsltAsInputStream.close();
 				}
-			} catch (IOException ignored) {
+			} catch (IOException e) {
+				LOGGER.log(Level.FINE, "Failed to close CSS and/or XSLT file: " + e.getLocalizedMessage(), e);
 			}
 		}
 		return xmlOutput;
@@ -199,6 +201,8 @@ public class XmlOutputGenerator extends OutputGenerator<XmlOutput> {
 		JApiCmpXmlRoot jApiCmpXmlRoot = new JApiCmpXmlRoot();
 		jApiCmpXmlRoot.setOldJar(options.joinOldArchives());
 		jApiCmpXmlRoot.setNewJar(options.joinNewArchives());
+		jApiCmpXmlRoot.setOldVersion(options.joinOldVersions());
+		jApiCmpXmlRoot.setNewVersion(options.joinNewVersions());
 		jApiCmpXmlRoot.setClasses(jApiClasses);
 		jApiCmpXmlRoot.setAccessModifier(options.getAccessModifier().name());
 		jApiCmpXmlRoot.setOnlyModifications(options.isOutputOnlyModifications());

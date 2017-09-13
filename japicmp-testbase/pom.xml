@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.github.siom79.japicmp</groupId>
 		<artifactId>japicmp-base</artifactId>
-		<version>0.9.2-SNAPSHOT</version>
+		<version>0.10.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>japicmp-testbase</artifactId>
@@ -16,19 +16,21 @@
 		<module>japicmp-test</module>
 		<module>japicmp-test-maven-plugin</module>
 		<module>japicmp-test-maven-plugin-guava</module>
-		<!--<module>japicmp-test-maven-plugin-japicmp</module>-->
+		<module>japicmp-test-maven-plugin-japicmp</module>
 		<module>japicmp-test-service-impl-base</module>
 		<module>japicmp-test-maven-plugin-classifier</module>
 		<module>japicmp-test2-v1</module>
 		<module>japicmp-test2-v2</module>
 		<module>japicmp-test-maven-plugin-pom-module</module>
 		<module>japicmp-test-vx-client</module>
-		<!--<module>japicmp-test-maven-plugin-ignoremissingartifact</module>-->
-		<!--<module>japicmp-test-maven-plugin-packaging</module>-->
+		<module>japicmp-test-maven-plugin-ignoremissingartifact</module>
+		<module>japicmp-test-maven-plugin-packaging</module>
+		<module>japicmp-test-ant-task</module>
 	</modules>
 
 	<properties>
 		<maven.site.plugin.skip>true</maven.site.plugin.skip>
+		<maven.javadoc.skip>true</maven.javadoc.skip>
 	</properties>
 
 	<dependencies>

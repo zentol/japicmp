@@ -1,7 +1,9 @@
 package japicmp.maven;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import japicmp.cli.JApiCli;
+import japicmp.cmp.JApiCmpArchive;
 import japicmp.cmp.JarArchiveComparator;
 import japicmp.cmp.JarArchiveComparatorOptions;
 import japicmp.config.Options;
@@ -13,6 +15,8 @@ import japicmp.output.stdout.StdoutOutputGenerator;
 import japicmp.output.xml.XmlOutput;
 import japicmp.output.xml.XmlOutputGenerator;
 import japicmp.output.xml.XmlOutputGeneratorOptions;
+import japicmp.versioning.SemanticVersion;
+import japicmp.versioning.VersionChange;
 import javassist.CtClass;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -51,7 +55,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-@Mojo(name = "cmp", requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.VERIFY)
+@Mojo(name = "cmp", requiresDependencyResolution = ResolutionScope.COMPILE, defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
 public class JApiCmpMojo extends AbstractMojo {
 	@org.apache.maven.plugins.annotations.Parameter(required = false)
 	private Version oldVersion;
@@ -69,7 +73,7 @@ public class JApiCmpMojo extends AbstractMojo {
 	private List<Dependency> oldClassPathDependencies;
 	@org.apache.maven.plugins.annotations.Parameter(required = false)
 	private List<Dependency> newClassPathDependencies;
-	@org.apache.maven.plugins.annotations.Parameter(required = false)
+	@org.apache.maven.plugins.annotations.Parameter(property = "japicmp.skip", required = false)
 	private String skip;
 	@org.apache.maven.plugins.annotations.Parameter(property = "project.build.directory", required = true)
 	private File projectBuildDir;
@@ -102,7 +106,7 @@ public class JApiCmpMojo extends AbstractMojo {
 			getLog().info("Skipping execution because parameter 'skip' was set to true.");
 			return Optional.absent();
 		}
-		if (filterModule(pluginParameters, mavenParameters)) {
+		if (skipModule(pluginParameters, mavenParameters)) {
 			return Optional.absent();
 		}
 		Options options = getOptions(pluginParameters, mavenParameters);
@@ -125,8 +129,7 @@ public class JApiCmpMojo extends AbstractMojo {
 					getLog().info("Written file '" + file.getAbsolutePath() + "'.");
 				}
 			}
-			VersionChange versionChange = new VersionChange(options.getOldArchives(), options.getNewArchives());
-			breakBuildIfNecessary(jApiClasses, pluginParameters.getParameterParam(), versionChange, options, jarArchiveComparator);
+			breakBuildIfNecessary(jApiClasses, pluginParameters.getParameterParam(), options, jarArchiveComparator);
 			return Optional.of(xmlOutput);
 		} catch (IOException e) {
 			throw new MojoFailureException(String.format("Failed to construct output directory: %s", e.getMessage()), e);
@@ -159,7 +162,7 @@ public class JApiCmpMojo extends AbstractMojo {
 					} catch (ScriptException e) {
 						throw new MojoFailureException("Execution of post-analysis script failed: " + e.getMessage(), e);
 					} catch (FileNotFoundException e) {
-						throw new MojoFailureException("Post-analysis script '" + postAnalysisFilterScript + " does not exist.");
+						throw new MojoFailureException("Post-analysis script '" + postAnalysisFilterScript + " does not exist.", e);
 					} catch (IOException e) {
 						throw new MojoFailureException("Failed to load post-analysis script '" + postAnalysisFilterScript + ": " + e.getMessage(), e);
 					}
@@ -173,34 +176,9 @@ public class JApiCmpMojo extends AbstractMojo {
 		return filteredList;
 	}
 
-	private boolean filterModule(PluginParameters pluginParameters, MavenParameters mavenParameters) {
-		MavenProject mavenProject = mavenParameters.getMavenProject();
-		if (mavenProject != null && pluginParameters.getParameterParam() !=null) {
-			List<String> packagingSupporteds = pluginParameters.getParameterParam().getPackagingSupporteds();
-			if ((packagingSupporteds != null) && !packagingSupporteds.isEmpty()) {
-				if (!packagingSupporteds.contains(mavenProject.getPackaging())) {
-					getLog().info("Filtered according to packagingFilter");
-					return true;
-				}
-			} else {
-				getLog().debug("No packaging support defined, no filtering");
-			}
-			if ("pom".equals(mavenProject.getPackaging())) {
-				boolean skipPomModules = true;
-				Parameter parameterParam = pluginParameters.getParameterParam();
-				if (parameterParam != null) {
-					String skipPomModulesAsString = parameterParam.getSkipPomModules();
-					if (skipPomModulesAsString != null) {
-						skipPomModules = Boolean.valueOf(skipPomModulesAsString);
-					}
-				}
-				if (skipPomModules) {
-					getLog().info("Skipping execution because packaging of this module is 'pom'.");
-					return true;
-				}
-			}
-		}
-		return false;
+	private boolean skipModule(PluginParameters pluginParameters, MavenParameters mavenParameters) {
+		SkipModuleStrategy skipModuleStrategy = new SkipModuleStrategy(pluginParameters, mavenParameters, getLog());
+		return skipModuleStrategy.skip();
 	}
 
 	private enum ConfigurationVersion {
@@ -266,13 +244,14 @@ public class JApiCmpMojo extends AbstractMojo {
 	private void filterSnapshots(List versions) {
 		for (Iterator versionIterator = versions.iterator(); versionIterator.hasNext(); ) {
 			ArtifactVersion version = (ArtifactVersion) versionIterator.next();
-			if ("SNAPSHOT".equals(version.getQualifier())) {
+			String qualifier = version.getQualifier();
+			if (qualifier != null && qualifier.endsWith("SNAPSHOT")) {
 				versionIterator.remove();
 			}
 		}
 	}
 
-	private void populateArchivesListsFromParameters(PluginParameters pluginParameters, MavenParameters mavenParameters, List<File> oldArchives, List<File> newArchives) throws MojoFailureException {
+	private void populateArchivesListsFromParameters(PluginParameters pluginParameters, MavenParameters mavenParameters, List<JApiCmpArchive> oldArchives, List<JApiCmpArchive> newArchives) throws MojoFailureException {
 		if (pluginParameters.getOldVersionParam() != null) {
 			oldArchives.addAll(retrieveFileFromConfiguration(pluginParameters.getOldVersionParam(), "oldVersion", mavenParameters, pluginParameters, ConfigurationVersion.OLD));
 		}
@@ -292,7 +271,7 @@ public class JApiCmpMojo extends AbstractMojo {
 						if (!artifact.isOptional()) { //skip optional artifacts because getFile() will return null
 							File file = artifact.getFile();
 							if (file != null) {
-								oldArchives.add(file);
+								oldArchives.add(new JApiCmpArchive(file, guessVersion(file)));
 							} else {
 								getLog().warn("Artifact '" + artifact + " does not have a file.");
 							}
@@ -320,9 +299,9 @@ public class JApiCmpMojo extends AbstractMojo {
 				if (file != null) {
 					try (JarFile jarFile = new JarFile(file)) {
 						getLog().debug("Could open file '" + file.getAbsolutePath() + "' of artifact as jar archive: " + jarFile.getName());
-						newArchives.add(file);
+						newArchives.add(new JApiCmpArchive(file, guessVersion(file)));
 					} catch (IOException e) {
-						getLog().warn("No new version specified and file '" + file.getAbsolutePath() + "' of artifact could not be opened as jar archive: " + e.getMessage());
+						getLog().warn("No new version specified and file '" + file.getAbsolutePath() + "' of artifact could not be opened as jar archive: " + e.getMessage(), e);
 					}
 				} else {
 					// maven projects with e.g. packaging type ejb don't have a file -> try to resolve artifact through
@@ -337,9 +316,9 @@ public class JApiCmpMojo extends AbstractMojo {
 								if (file != null) {
 									try (JarFile jarFile = new JarFile(file)) {
 										getLog().debug("Could open file '" + file.getAbsolutePath() + "' of artifact as jar archive: " + jarFile.getName());
-										newArchives.add(file);
+										newArchives.add(new JApiCmpArchive(file, guessVersion(file)));
 									} catch (IOException e) {
-										getLog().warn("No new version specified and file '" + file.getAbsolutePath() + "' of artifact could not be opened as jar archive: " + e.getMessage());
+										getLog().warn("No new version specified and file '" + file.getAbsolutePath() + "' of artifact could not be opened as jar archive: " + e.getMessage(), e);
 									}
 								}
 							}
@@ -370,7 +349,7 @@ public class JApiCmpMojo extends AbstractMojo {
 		}
 	}
 
-	private void breakBuildIfNecessary(List<JApiClass> jApiClasses, Parameter parameterParam, VersionChange versionChange, Options options, JarArchiveComparator jarArchiveComparator) throws MojoFailureException {
+	private void breakBuildIfNecessary(List<JApiClass> jApiClasses, Parameter parameterParam, Options options, JarArchiveComparator jarArchiveComparator) throws MojoFailureException {
 		if (breakBuildOnModificationsParameter(parameterParam)) {
 			for (JApiClass jApiClass : jApiClasses) {
 				if (jApiClass.getChangeStatus() != JApiChangeStatus.UNCHANGED) {
@@ -378,28 +357,57 @@ public class JApiCmpMojo extends AbstractMojo {
 				}
 			}
 		}
-		breakBuildIfNecessary(jApiClasses, parameterParam, options, jarArchiveComparator);
+		breakBuildIfNecessaryByApplyingFilter(jApiClasses, parameterParam, options, jarArchiveComparator);
 		if (breakBuildBasedOnSemanticVersioning(parameterParam)) {
-			VersionChange.ChangeType changeType = versionChange.computeChangeType();
-			SemverOut semverOut = new SemverOut(options, jApiClasses);
-			String semver = semverOut.generate();
-			if (changeType == VersionChange.ChangeType.MINOR && semver.equals("1.0.0")) {
-				throw new MojoFailureException("Versions of archives indicate a minor change but binary incompatible changes found.");
+			boolean ignoreMissingOldVersion = "true".equalsIgnoreCase(parameter.getIgnoreMissingOldVersion() == null ? "false" : parameter.getIgnoreMissingOldVersion());
+			boolean ignoreMissingNewVersion = "true".equalsIgnoreCase(parameter.getIgnoreMissingNewVersion() == null ? "false" : parameter.getIgnoreMissingNewVersion());
+			List<SemanticVersion> oldVersions = new ArrayList<>();
+			List<SemanticVersion> newVersions = new ArrayList<>();
+			for (JApiCmpArchive file : options.getOldArchives()) {
+				Optional<SemanticVersion> semanticVersion = file.getVersion().getSemanticVersion();
+				if (semanticVersion.isPresent()) {
+					oldVersions.add(semanticVersion.get());
+				}
 			}
-			if (changeType == VersionChange.ChangeType.PATCH && semver.equals("1.0.0")) {
-				throw new MojoFailureException("Versions of archives indicate a patch change but binary incompatible changes found.");
+			for (JApiCmpArchive file : options.getNewArchives()) {
+				Optional<SemanticVersion> semanticVersion = file.getVersion().getSemanticVersion();
+				if (semanticVersion.isPresent()) {
+					newVersions.add(semanticVersion.get());
+				}
 			}
-			if (changeType == VersionChange.ChangeType.PATCH && semver.equals("0.1.0")) {
-				throw new MojoFailureException("Versions of archives indicate a patch change but binary compatible changes found.");
-			}
-			if (changeType == VersionChange.ChangeType.UNCHANGED && semver.equals("1.0.0")) {
-				throw new MojoFailureException("Versions of archives indicate no API changes but binary incompatible changes found.");
-			}
-			if (changeType == VersionChange.ChangeType.UNCHANGED && semver.equals("0.1.0")) {
-				throw new MojoFailureException("Versions of archives indicate no API changes but binary compatible changes found.");
-			}
-			if (changeType == VersionChange.ChangeType.UNCHANGED && semver.equals("0.0.1")) {
-				throw new MojoFailureException("Versions of archives indicate no API changes but found API changes.");
+			VersionChange versionChange = new VersionChange(oldVersions, newVersions, ignoreMissingOldVersion, ignoreMissingNewVersion);
+			if (!versionChange.isAllMajorVersionsZero()) {
+				Optional<SemanticVersion.ChangeType> changeTypeOptional = versionChange.computeChangeType();
+				if (changeTypeOptional.isPresent()) {
+					SemanticVersion.ChangeType changeType = changeTypeOptional.get();
+					SemverOut semverOut = new SemverOut(options, jApiClasses);
+					String semver = semverOut.generate();
+					if (changeType == SemanticVersion.ChangeType.MINOR && semver.equals("1.0.0")) {
+						throw new MojoFailureException("Versions of archives indicate a minor change but binary incompatible changes found.");
+					}
+					if (changeType == SemanticVersion.ChangeType.PATCH && semver.equals("1.0.0")) {
+						throw new MojoFailureException("Versions of archives indicate a patch change but binary incompatible changes found.");
+					}
+					if (changeType == SemanticVersion.ChangeType.PATCH && semver.equals("0.1.0")) {
+						throw new MojoFailureException("Versions of archives indicate a patch change but binary compatible changes found.");
+					}
+					if (changeType == SemanticVersion.ChangeType.UNCHANGED && semver.equals("1.0.0")) {
+						throw new MojoFailureException("Versions of archives indicate no API changes but binary incompatible changes found.");
+					}
+					if (changeType == SemanticVersion.ChangeType.UNCHANGED && semver.equals("0.1.0")) {
+						throw new MojoFailureException("Versions of archives indicate no API changes but binary compatible changes found.");
+					}
+					if (changeType == SemanticVersion.ChangeType.UNCHANGED && semver.equals("0.0.1")) {
+						throw new MojoFailureException("Versions of archives indicate no API changes but found API changes.");
+					}
+				} else {
+					if (getLog().isDebugEnabled()) {
+						Joiner joiner = Joiner.on(';');
+						getLog().debug("No change type available for old version(s) " + joiner.join(oldVersions) + " and new version(s) " + joiner.join(newVersions) + ".");
+					}
+				}
+			} else {
+				getLog().info("Skipping semantic version check because all major versions are zero (see http://semver.org/#semantic-versioning-specification-semver, section 4).");
 			}
 		}
 	}
@@ -421,7 +429,7 @@ public class JApiCmpMojo extends AbstractMojo {
 		}
 	}
 
-	void breakBuildIfNecessary(List<JApiClass> jApiClasses, Parameter parameterParam, final Options options,
+	void breakBuildIfNecessaryByApplyingFilter(List<JApiClass> jApiClasses, Parameter parameterParam, final Options options,
 									   final JarArchiveComparator jarArchiveComparator) throws MojoFailureException {
 		final StringBuilder sb = new StringBuilder();
 		final BreakBuildResult breakBuildResult = new BreakBuildResult(breakBuildOnBinaryIncompatibleModifications(parameterParam),
@@ -678,7 +686,7 @@ public class JApiCmpMojo extends AbstractMojo {
 					AccessModifier accessModifier = AccessModifier.valueOf(accessModifierArg.toUpperCase());
 					options.setAccessModifier(accessModifier);
 				} catch (IllegalArgumentException e) {
-					throw new MojoFailureException(String.format("Invalid value for option accessModifier: %s. Possible values are: %s.", accessModifierArg, AccessModifier.listOfAccessModifier()));
+					throw new MojoFailureException(String.format("Invalid value for option accessModifier: %s. Possible values are: %s.", accessModifierArg, AccessModifier.listOfAccessModifier()), e);
 				}
 			}
 			String onlyBinaryIncompatible = parameterParam.getOnlyBinaryIncompatible();
@@ -694,13 +702,13 @@ public class JApiCmpMojo extends AbstractMojo {
 			List<String> excludes = parameterParam.getExcludes();
 			if (excludes != null) {
 				for (String exclude : excludes) {
-					options.addExcludeFromArgument(Optional.fromNullable(exclude));
+					options.addExcludeFromArgument(Optional.fromNullable(exclude), false);
 				}
 			}
 			List<String> includes = parameterParam.getIncludes();
 			if (includes != null) {
 				for (String include : includes) {
-					options.addIncludeFromArgument(Optional.fromNullable(include));
+					options.addIncludeFromArgument(Optional.fromNullable(include), false);
 				}
 			}
 			String includeSyntheticString = parameterParam.getIncludeSynthetic();
@@ -856,7 +864,13 @@ public class JApiCmpMojo extends AbstractMojo {
 		if (executionId != null && !"default".equals(executionId)) {
 			filename = executionId;
 		}
-		return filename;
+		StringBuilder sb = new StringBuilder();
+		for (char c : filename.toCharArray()) {
+			if (c == '.' || Character.isJavaIdentifierPart(c) || c == '-') {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 
 	private void setUpClassPath(JarArchiveComparatorOptions comparatorOptions, PluginParameters pluginParameters, MavenParameters mavenParameters) throws MojoFailureException {
@@ -871,9 +885,9 @@ public class JApiCmpMojo extends AbstractMojo {
 						getLog().debug("Element <dependencies/> found. Using " + JApiCli.ClassPathMode.ONE_COMMON_CLASSPATH);
 					}
 					for (Dependency dependency : pluginParameters.getDependenciesParam()) {
-						List<File> files = resolveDependencyToFile("dependencies", dependency, mavenParameters, true, pluginParameters, ConfigurationVersion.NEW);
-						for (File file : files) {
-							comparatorOptions.getClassPathEntries().add(file.getAbsolutePath());
+						List<JApiCmpArchive> jApiCmpArchives = resolveDependencyToFile("dependencies", dependency, mavenParameters, true, pluginParameters, ConfigurationVersion.NEW);
+						for (JApiCmpArchive jApiCmpArchive : jApiCmpArchives) {
+							comparatorOptions.getClassPathEntries().add(jApiCmpArchive.getFile().getAbsolutePath());
 						}
 						comparatorOptions.setClassPathMode(JarArchiveComparatorOptions.ClassPathMode.ONE_COMMON_CLASSPATH);
 					}
@@ -885,17 +899,17 @@ public class JApiCmpMojo extends AbstractMojo {
 					}
 					if (pluginParameters.getOldClassPathDependencies() != null) {
 						for (Dependency dependency : pluginParameters.getOldClassPathDependencies()) {
-							List<File> files = resolveDependencyToFile("oldClassPathDependencies", dependency, mavenParameters, true, pluginParameters, ConfigurationVersion.OLD);
-							for (File file : files) {
-								comparatorOptions.getOldClassPath().add(file.getAbsolutePath());
+							List<JApiCmpArchive> jApiCmpArchives = resolveDependencyToFile("oldClassPathDependencies", dependency, mavenParameters, true, pluginParameters, ConfigurationVersion.OLD);
+							for (JApiCmpArchive archive : jApiCmpArchives) {
+								comparatorOptions.getOldClassPath().add(archive.getFile().getAbsolutePath());
 							}
 						}
 					}
 					if (pluginParameters.getNewClassPathDependencies() != null) {
 						for (Dependency dependency : pluginParameters.getNewClassPathDependencies()) {
-							List<File> files = resolveDependencyToFile("newClassPathDependencies", dependency, mavenParameters, true, pluginParameters, ConfigurationVersion.NEW);
-							for (File file : files) {
-								comparatorOptions.getNewClassPath().add(file.getAbsolutePath());
+							List<JApiCmpArchive> jApiCmpArchives = resolveDependencyToFile("newClassPathDependencies", dependency, mavenParameters, true, pluginParameters, ConfigurationVersion.NEW);
+							for (JApiCmpArchive archive : jApiCmpArchives) {
+								comparatorOptions.getNewClassPath().add(archive.getFile().getAbsolutePath());
 							}
 						}
 					}
@@ -938,21 +952,21 @@ public class JApiCmpMojo extends AbstractMojo {
 		}
 	}
 
-	private List<File> retrieveFileFromConfiguration(DependencyDescriptor dependencyDescriptor, String parameterName, MavenParameters mavenParameters, PluginParameters pluginParameters, ConfigurationVersion configurationVersion) throws MojoFailureException {
-		List<File> files;
+	private List<JApiCmpArchive> retrieveFileFromConfiguration(DependencyDescriptor dependencyDescriptor, String parameterName, MavenParameters mavenParameters, PluginParameters pluginParameters, ConfigurationVersion configurationVersion) throws MojoFailureException {
+		List<JApiCmpArchive> jApiCmpArchives;
 		if (dependencyDescriptor instanceof Dependency) {
 			Dependency dependency = (Dependency) dependencyDescriptor;
-			files = resolveDependencyToFile(parameterName, dependency, mavenParameters, false, pluginParameters, configurationVersion);
+			jApiCmpArchives = resolveDependencyToFile(parameterName, dependency, mavenParameters, false, pluginParameters, configurationVersion);
 		} else if (dependencyDescriptor instanceof ConfigurationFile) {
 			ConfigurationFile configurationFile = (ConfigurationFile) dependencyDescriptor;
-			files = resolveConfigurationFileToFile(parameterName, configurationFile, configurationVersion, pluginParameters);
+			jApiCmpArchives = resolveConfigurationFileToFile(parameterName, configurationFile, configurationVersion, pluginParameters);
 		} else {
 			throw new MojoFailureException("DependencyDescriptor is not of type <dependency/> nor of type <configurationFile/>.");
 		}
-		return files;
+		return jApiCmpArchives;
 	}
 
-	private List<File> retrieveFileFromConfiguration(Version version, String parameterName, MavenParameters mavenParameters, PluginParameters pluginParameters, ConfigurationVersion configurationVersion) throws MojoFailureException {
+	private List<JApiCmpArchive> retrieveFileFromConfiguration(Version version, String parameterName, MavenParameters mavenParameters, PluginParameters pluginParameters, ConfigurationVersion configurationVersion) throws MojoFailureException {
 		if (version != null) {
 			Dependency dependency = version.getDependency();
 			if (dependency != null) {
@@ -967,7 +981,7 @@ public class JApiCmpMojo extends AbstractMojo {
 		throw new MojoFailureException(String.format("Missing configuration parameter: %s", parameterName));
 	}
 
-	private List<File> resolveConfigurationFileToFile(String parameterName, ConfigurationFile configurationFile, ConfigurationVersion configurationVersion, PluginParameters pluginParameters) throws MojoFailureException {
+	private List<JApiCmpArchive> resolveConfigurationFileToFile(String parameterName, ConfigurationFile configurationFile, ConfigurationVersion configurationVersion, PluginParameters pluginParameters) throws MojoFailureException {
 		String path = configurationFile.getPath();
 		if (path == null) {
 			throw new MojoFailureException(String.format("The path element in the configuration of the plugin is missing for %s.", parameterName));
@@ -987,11 +1001,12 @@ public class JApiCmpMojo extends AbstractMojo {
 				getLog().warn("The file given by path '" + file.getAbsolutePath() + "' is either not a file or is not readable.");
 			}
 		}
-		return Collections.singletonList(file);
+		return Collections.singletonList(new JApiCmpArchive(file, guessVersion(file)));
 	}
 
-	private List<File> resolveDependencyToFile(String parameterName, Dependency dependency, MavenParameters mavenParameters, boolean transitively, PluginParameters pluginParameters, ConfigurationVersion configurationVersion) throws MojoFailureException {
-		List<File> files = new ArrayList<>();
+	private List<JApiCmpArchive> resolveDependencyToFile(String parameterName, Dependency dependency, MavenParameters mavenParameters,
+			boolean transitively, PluginParameters pluginParameters, ConfigurationVersion configurationVersion) throws MojoFailureException {
+		List<JApiCmpArchive> jApiCmpArchives = new ArrayList<>();
 		if (getLog().isDebugEnabled()) {
 			getLog().debug("Trying to resolve dependency '" + dependency + "' to file.");
 		}
@@ -1003,13 +1018,13 @@ public class JApiCmpMojo extends AbstractMojo {
 				if (!artifact.isOptional()) { //skip optional artifacts because getFile() will return null
 					File file = artifact.getFile();
 					if (file != null) {
-						files.add(file);
+						jApiCmpArchives.add(new JApiCmpArchive(file, artifact.getVersion()));
 					} else {
 						throw new MojoFailureException(String.format("Could not resolve dependency with descriptor '%s'.", descriptor));
 					}
 				}
 			}
-			if (files.size() == 0) {
+			if (jApiCmpArchives.size() == 0) {
 				String message = String.format("Could not resolve dependency with descriptor '%s'.", descriptor);
 				if (ignoreMissingArtifact(pluginParameters, configurationVersion)) {
 					getLog().warn(message);
@@ -1050,11 +1065,22 @@ public class JApiCmpMojo extends AbstractMojo {
 				}
 				addFile = false;
 			}
+			String version = guessVersion(file);
 			if (addFile) {
-				files.add(file);
+				jApiCmpArchives.add(new JApiCmpArchive(file, version));
 			}
 		}
-		return files;
+		return jApiCmpArchives;
+	}
+
+	private String guessVersion(File file) {
+		String name = file.getName();
+		Optional<SemanticVersion> semanticVersion = japicmp.versioning.Version.getSemanticVersion(name);
+		String version = semanticVersion.isPresent() ? semanticVersion.get().toString() : "n.a.";
+		if (name.contains("SNAPSHOT")) {
+			version += "-SNAPSHOT";
+		}
+		return version;
 	}
 
 	private boolean ignoreMissingArtifact(PluginParameters pluginParameters, ConfigurationVersion configurationVersion) {

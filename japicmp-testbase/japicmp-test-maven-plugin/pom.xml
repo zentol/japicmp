@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.github.siom79.japicmp</groupId>
 		<artifactId>japicmp-testbase</artifactId>
-		<version>0.9.2-SNAPSHOT</version>
+		<version>0.10.1-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -12,6 +12,7 @@
 	<properties>
 		<!-- minimize standard reports -->
 		<mpir.skip>true</mpir.skip>
+		<japicmp.skip-jdk7>false</japicmp.skip-jdk7>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -186,6 +187,7 @@
 							</newVersion>
 							<parameter>
 								<ignoreMissingOldVersion>true</ignoreMissingOldVersion>
+								<breakBuildBasedOnSemanticVersioning>false</breakBuildBasedOnSemanticVersioning>
 							</parameter>
 							<dependencies>
 								<dependency>
@@ -253,6 +255,61 @@
 									<ignoreMissingClassesByRegularExpression>org.apache.commons.math3.*</ignoreMissingClassesByRegularExpression>
 								</ignoreMissingClassesByRegularExpressions>
 							</parameter>
+						</configuration>
+					</execution>
+					<execution>
+						<id>ignore-module</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>cmp</goal>
+						</goals>
+						<configuration>
+							<oldVersion>
+								<dependency>
+									<groupId>com.github.siom79.japicmp</groupId>
+									<artifactId>japicmp-test-v1</artifactId>
+									<version>${project.version}</version>
+								</dependency>
+							</oldVersion>
+							<newVersion>
+								<dependency>
+									<groupId>com.github.siom79.japicmp</groupId>
+									<artifactId>japicmp-test-v2</artifactId>
+									<version>${project.version}</version>
+								</dependency>
+							</newVersion>
+							<parameter>
+								<includeModules>
+									<includeModule>.*incl.*</includeModule>
+								</includeModules>
+								<excludeModules>
+									<excludeModule>.*test.*</excludeModule>
+								</excludeModules>
+							</parameter>
+						</configuration>
+					</execution>
+					<execution>
+						<id>class-file-format-version</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>cmp</goal>
+						</goals>
+						<configuration>
+							<skip>${japicmp.skip-jdk7}</skip>
+							<oldVersion>
+								<dependency>
+									<groupId>com.google.guava</groupId>
+									<artifactId>guava</artifactId>
+									<version>18.0</version>
+								</dependency>
+							</oldVersion>
+							<newVersion>
+								<dependency>
+									<groupId>com.google.guava</groupId>
+									<artifactId>guava</artifactId>
+									<version>22.0</version>
+								</dependency>
+							</newVersion>
 						</configuration>
 					</execution>
 				</executions>
@@ -324,4 +381,16 @@
 			</plugin>
 		</plugins>
 	</reporting>
+
+	<profiles>
+		<profile>
+			<id>java7-disabled</id>
+			<activation>
+				<jdk>(,1.7]</jdk>
+			</activation>
+			<properties>
+				<japicmp.skip-jdk7>true</japicmp.skip-jdk7>
+			</properties>
+		</profile>
+	</profiles>
 </project>

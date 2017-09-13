@@ -5,17 +5,17 @@ The command line tool has the following options:
 ```
 SYNOPSIS
         java -jar japicmp.jar [-a <accessModifier>] [(-b | --only-incompatible)]
-                [(-e <excludes> | --exclude <excludes>)] [(-h | --help)]
-                [--html-file <pathToHtmlOutputFile>]
+                [(-e <excludes> | --exclude <excludes>)] [--exclude-exclusively]
+                [(-h | --help)] [--html-file <pathToHtmlOutputFile>]
                 [--html-stylesheet <pathToHtmlStylesheet>]
                 [(-i <includes> | --include <includes>)] [--ignore-missing-classes]
                 [--ignore-missing-classes-by-regex <ignoreMissingClassesByRegEx>...]
-                [--include-synthetic] [(-m | --only-modified)]
+                [--include-exclusively] [--include-synthetic] [(-m | --only-modified)]
                 [(-n <pathToNewVersionJar> | --new <pathToNewVersionJar>)]
                 [--new-classpath <newClassPath>] [--no-annotations]
                 [(-o <pathToOldVersionJar> | --old <pathToOldVersionJar>)]
-                [--old-classpath <oldClassPath>] [(-s | --semantic-versioning)]
-                [--report-only-filename]
+                [--old-classpath <oldClassPath>] [--report-only-filename]
+                [(-s | --semantic-versioning)]
                 [(-x <pathToXmlOutputFile> | --xml-file <pathToXmlOutputFile>)]
 
 OPTIONS
@@ -32,6 +32,10 @@ OPTIONS
             package.Class#classMember, * can be used as wildcard. Annotations
             are given as FQN starting with @. Examples:
             mypackage;my.Class;other.Class#method(int,long);foo.Class#field;@my.Annotation.
+
+        --exclude-exclusively
+            Exclude only packages specified in the "exclude" option, include
+            their sub-packages
 
         -h, --help
             Display help information
@@ -54,6 +58,10 @@ OPTIONS
         --ignore-missing-classes-by-regex <ignoreMissingClassesByRegEx>
             Ignores only those superclasses/interface missing on the classpath
             that are selected by a regular expression.
+
+        --include-exclusively
+            Include only packages specified in the "include" option, exclude
+            their sub-packages
 
         --include-synthetic
             Include synthetic classes and class members that are hidden per
@@ -93,13 +101,13 @@ OPTIONS
 When your library implements interfaces or extends classes from other libraries than the JDK and you want to evaluate binary
 compatibility you must specify the classpath for the two different versions:
 
-    java -jar japicmp-0.9.1-jar-with-dependencies.jar -n new-version.jar -o old-version.jar --new-classpath other-library-v2.jar
+    java -jar japicmp-0.10.0-jar-with-dependencies.jar -n new-version.jar -o old-version.jar --new-classpath other-library-v2.jar
         --old-classpath other-library-v1.jar
 
 In case the classpath for both versions did not change, you can add the library using the standard way:
 
-	java -cp japicmp-0.9.1-jar-with-dependencies.jar;otherLibrary.jar japicmp.JApiCmp -n new-version.jar -o old-version.jar
+	java -cp japicmp-0.10.0-jar-with-dependencies.jar;otherLibrary.jar japicmp.JApiCmp -n new-version.jar -o old-version.jar
 
 For reporting purposes you can also provide more than one jar as old or new version(s):
 
-	java -jar japicmp-0.9.1-jar-with-dependencies.jar -o lib1-old.jar;lib2-old.jar -n lib1-new.jar;lib2-new.jar
+	java -jar japicmp-0.10.0-jar-with-dependencies.jar -o lib1-old.jar;lib2-old.jar -n lib1-new.jar;lib2-new.jar

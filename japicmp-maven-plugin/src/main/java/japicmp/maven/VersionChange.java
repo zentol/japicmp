@@ -1,99 +1,65 @@
 package japicmp.maven;
 
+import com.google.common.base.Optional;
+import japicmp.cmp.JApiCmpArchive;
+import japicmp.versioning.SemanticVersion;
 import org.apache.maven.plugin.MojoFailureException;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VersionChange {
 	private static final Pattern versionPattern = Pattern.compile(".*([0-9]+)\\.([0-9]+)\\.([0-9]+).*");
-	private final List<File> oldArchives;
-	private final List<File> newArchives;
+	private final List<JApiCmpArchive> oldArchives;
+	private final List<JApiCmpArchive> newArchives;
+	private final Parameter parameter;
 
-	public enum ChangeType {
-		MAJOR(3),
-		MINOR(2),
-		PATCH(1),
-		UNCHANGED(0);
-
-		private final int rank;
-
-		ChangeType(int rank) {
-			this.rank = rank;
-		}
-
-		public int getRank() {
-			return rank;
-		}
-	}
-
-	private static class SemanticVersion {
-		private final int major;
-		private final int minor;
-		private final int patch;
-
-		public SemanticVersion(int major, int minor, int patch) {
-			this.major = major;
-			this.minor = minor;
-			this.patch = patch;
-		}
-
-		public int getMajor() {
-			return major;
-		}
-
-		public int getMinor() {
-			return minor;
-		}
-
-		public int getPatch() {
-			return patch;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			SemanticVersion that = (SemanticVersion) o;
-			return major == that.major && minor == that.minor && patch == that.patch;
-		}
-
-		public ChangeType computeChangeType(SemanticVersion version) {
-			if (this.major != version.major) {
-				return ChangeType.MAJOR;
-			}
-			if (this.minor != version.minor) {
-				return ChangeType.MINOR;
-			}
-			if (this.patch != version.patch) {
-				return ChangeType.PATCH;
-			}
-			return ChangeType.UNCHANGED;
-		}
-	}
-
-	public VersionChange(List<File> oldArchives, List<File> newArchives) {
+	public VersionChange(List<JApiCmpArchive> oldArchives, List<JApiCmpArchive> newArchives, Parameter parameter) {
 		this.oldArchives = oldArchives;
 		this.newArchives = newArchives;
+		this.parameter = parameter;
 	}
 
-	public ChangeType computeChangeType() throws MojoFailureException {
+	public Optional<SemanticVersion.ChangeType> computeChangeType() throws MojoFailureException {
 		if (this.oldArchives.isEmpty()) {
-			throw new MojoFailureException("Please provide at least one old version.");
+			if (!"true".equalsIgnoreCase(this.parameter != null ? this.parameter.getIgnoreMissingOldVersion() : "false")) {
+				throw new MojoFailureException("Please provide at least one old version.");
+			} else {
+				return Optional.absent();
+			}
 		}
 		if (this.newArchives.isEmpty()) {
-			throw new MojoFailureException("Please provide at least one old version.");
+			if (!"true".equalsIgnoreCase(this.parameter != null ? this.parameter.getIgnoreMissingNewVersion() : "false")) {
+				throw new MojoFailureException("Please provide at least one new version.");
+			} else {
+				return Optional.absent();
+			}
 		}
 		List<SemanticVersion> oldVersions = new ArrayList<>();
 		List<SemanticVersion> newVersions = new ArrayList<>();
-		for (File file : this.oldArchives) {
-			oldVersions.add(getVersion(file));
+		for (JApiCmpArchive file : this.oldArchives) {
+			Optional<SemanticVersion> semanticVersion = file.getVersion().getSemanticVersion();
+			if (semanticVersion.isPresent()) {
+				oldVersions.add(semanticVersion.get());
+			}
 		}
-		for (File file : this.newArchives) {
-			newVersions.add(getVersion(file));
+		for (JApiCmpArchive file : this.newArchives) {
+			Optional<SemanticVersion> semanticVersion = file.getVersion().getSemanticVersion();
+			if (semanticVersion.isPresent()) {
+				newVersions.add(semanticVersion.get());
+			}
+		}
+		if (oldVersions.isEmpty()) {
+			throw new MojoFailureException("Could not extract semantic version for at least one old version. Please " +
+				"follow the rules for semantic versioning.");
+		}
+		if (newVersions.isEmpty()) {
+			throw new MojoFailureException("Could not extract semantic version for at least one new version. Please " +
+				"follow the rules for semantic versioning.");
 		}
 		if (allVersionsTheSame(oldVersions) && allVersionsTheSame(newVersions)) {
 			SemanticVersion oldVersion = oldVersions.get(0);
@@ -103,19 +69,22 @@ public class VersionChange {
 			if (oldVersions.size() != newVersions.size()) {
 				throw new MojoFailureException("Cannot compare versions because the number of old versions is different than the number of new versions.");
 			} else {
-				List<ChangeType> changeTypes = new ArrayList<>();
+				List<SemanticVersion.ChangeType> changeTypes = new ArrayList<>();
 				for (int i=0; i<oldVersions.size(); i++) {
 					SemanticVersion oldVersion = oldVersions.get(i);
 					SemanticVersion newVersion = newVersions.get(i);
-					changeTypes.add(oldVersion.computeChangeType(newVersion));
+					Optional<SemanticVersion.ChangeType> changeTypeOptional = oldVersion.computeChangeType(newVersion);
+					if (changeTypeOptional.isPresent()) {
+						changeTypes.add(changeTypeOptional.get());
+					}
 				}
-				ChangeType maxRank = ChangeType.UNCHANGED;
-				for (ChangeType changeType : changeTypes) {
+				SemanticVersion.ChangeType maxRank = SemanticVersion.ChangeType.UNCHANGED;
+				for (SemanticVersion.ChangeType changeType : changeTypes) {
 					if (changeType.getRank() > maxRank.getRank()) {
 						maxRank = changeType;
 					}
 				}
-				return maxRank;
+				return Optional.fromNullable(maxRank);
 			}
 		}
 	}

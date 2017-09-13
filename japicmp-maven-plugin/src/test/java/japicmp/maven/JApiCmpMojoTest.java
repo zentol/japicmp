@@ -91,7 +91,7 @@ public class JApiCmpMojoTest {
 		assertThat(Files.exists(Paths.get(System.getProperty("user.dir"), "target", reportDir, "japicmp", "japicmp.html")), is(false));
 	}
 
-	private Version createVersion(String groupId, String artifactId, String version) {
+	public static Version createVersion(String groupId, String artifactId, String version) {
 		Version versionInstance = new Version();
 		Dependency dependency = new Dependency();
 		dependency.setGroupId(groupId);
@@ -129,13 +129,13 @@ public class JApiCmpMojoTest {
 				return Arrays.asList(interfaceCtClass, ctClass);
 			}
 		});
-		options.addExcludeFromArgument(Optional.of("japicmp.ITest")); // exclude japicmp.ITest
+		options.addExcludeFromArgument(Optional.of("japicmp.ITest"), false); // exclude japicmp.ITest
 		JApiCmpMojo mojo = new JApiCmpMojo();
 		Parameter parameterParam = new Parameter();
 		parameterParam.setBreakBuildIfCausedByExclusion(breakBuildIfCausedByExclusion); //do not break the build if cause is excluded
 		parameterParam.setBreakBuildOnBinaryIncompatibleModifications("true");
 		parameterParam.setBreakBuildOnSourceIncompatibleModifications("true");
-		mojo.breakBuildIfNecessary(compareClassesResult.getjApiClasses(), parameterParam, options, new JarArchiveComparator(jarArchiveComparatorOptions));
+		mojo.breakBuildIfNecessaryByApplyingFilter(compareClassesResult.getjApiClasses(), parameterParam, options, new JarArchiveComparator(jarArchiveComparatorOptions));
 	}
 
 	@Test
@@ -168,13 +168,13 @@ public class JApiCmpMojoTest {
 				return Arrays.asList(fieldTypeCtClass, ctClass);
 			}
 		});
-		options.addExcludeFromArgument(Optional.of("japicmp.FieldType")); // exclude japicmp.FieldType
+		options.addExcludeFromArgument(Optional.of("japicmp.FieldType"), false); // exclude japicmp.FieldType
 		JApiCmpMojo mojo = new JApiCmpMojo();
 		Parameter parameterParam = new Parameter();
 		parameterParam.setBreakBuildIfCausedByExclusion(breakBuildIfCausedByExclusion); //do not break the build if cause is excluded
 		parameterParam.setBreakBuildOnBinaryIncompatibleModifications("true");
 		parameterParam.setBreakBuildOnSourceIncompatibleModifications("true");
-		mojo.breakBuildIfNecessary(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
+		mojo.breakBuildIfNecessaryByApplyingFilter(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
 	}
 
 	@Test
@@ -207,13 +207,13 @@ public class JApiCmpMojoTest {
 				return Arrays.asList(typeCtClass, ctClass);
 			}
 		});
-		options.addExcludeFromArgument(Optional.of("japicmp.MethodReturnType")); // exclude japicmp.MethodReturnType
+		options.addExcludeFromArgument(Optional.of("japicmp.MethodReturnType"), false); // exclude japicmp.MethodReturnType
 		JApiCmpMojo mojo = new JApiCmpMojo();
 		Parameter parameterParam = new Parameter();
 		parameterParam.setBreakBuildIfCausedByExclusion(breakBuildIfCausedByExclusion); //do not break the build if cause is excluded
 		parameterParam.setBreakBuildOnBinaryIncompatibleModifications("true");
 		parameterParam.setBreakBuildOnSourceIncompatibleModifications("true");
-		mojo.breakBuildIfNecessary(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
+		mojo.breakBuildIfNecessaryByApplyingFilter(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
 	}
 
 	@Test
@@ -244,13 +244,13 @@ public class JApiCmpMojoTest {
 				return Arrays.asList(typeCtClass, ctClass);
 			}
 		});
-		options.addExcludeFromArgument(Optional.of("japicmp.SuperType")); // exclude japicmp.SuperType
+		options.addExcludeFromArgument(Optional.of("japicmp.SuperType"), false); // exclude japicmp.SuperType
 		JApiCmpMojo mojo = new JApiCmpMojo();
 		Parameter parameterParam = new Parameter();
 		parameterParam.setBreakBuildIfCausedByExclusion(breakBuildIfCausedByExclusion); //do not break the build if cause is excluded
 		parameterParam.setBreakBuildOnBinaryIncompatibleModifications("true");
 		parameterParam.setBreakBuildOnSourceIncompatibleModifications("true");
-		mojo.breakBuildIfNecessary(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
+		mojo.breakBuildIfNecessaryByApplyingFilter(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
 	}
 
 	@Test
@@ -278,7 +278,7 @@ public class JApiCmpMojoTest {
 		parameterParam.setBreakBuildOnBinaryIncompatibleModifications("true");
 		parameterParam.setBreakBuildOnSourceIncompatibleModifications("true");
 		try {
-			mojo.breakBuildIfNecessary(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
+			mojo.breakBuildIfNecessaryByApplyingFilter(compareClassesResult.getjApiClasses(), parameterParam, options, compareClassesResult.getJarArchiveComparator());
 			fail("No exception thrown.");
 		} catch (MojoFailureException e) {
 			String msg = e.getMessage();
