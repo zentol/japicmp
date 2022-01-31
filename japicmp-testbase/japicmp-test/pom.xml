@@ -31,6 +31,16 @@
 			<artifactId>japicmp-test2-v2</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.siom79.japicmp</groupId>
+			<artifactId>japicmp-test-provided-dependency</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.siom79.japicmp</groupId>
+			<artifactId>japicmp-test-optional-dependency</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

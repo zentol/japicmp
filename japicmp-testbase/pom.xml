@@ -32,6 +32,8 @@
 		<module>japicmp-test-maven-plugin-post-analysis-script-artifact</module>
 		<module>japicmp-test-maven-plugin-post-analysis-script-artifact-test</module>
 		<module>japicmp-test-ant-task</module>
+		<module>japicmp-test-provided-dependency</module>
+		<module>japicmp-test-optional-dependency</module>
 	</modules>
 
 	<properties>
