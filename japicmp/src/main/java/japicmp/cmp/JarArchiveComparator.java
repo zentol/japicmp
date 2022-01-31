@@ -20,6 +20,7 @@ import javassist.NotFoundException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedList;
@@ -240,8 +241,8 @@ public class JarArchiveComparator {
 					String name = jarEntry.getName();
 					if (name.endsWith(".class")) {
 						CtClass ctClass;
-						try {
-							ctClass = classPool.makeClass(jarFile.getInputStream(jarEntry));
+						try (InputStream classFile = jarFile.getInputStream(jarEntry)) {
+							ctClass = classPool.makeClass(classFile);
 						} catch (Exception e) {
 							throw new JApiCmpException(Reason.IoException, String.format("Failed to load file from jar '%s' as class file: %s.", name, e.getMessage()), e);
 						}
