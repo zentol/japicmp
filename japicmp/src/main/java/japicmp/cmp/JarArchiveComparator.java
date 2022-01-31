@@ -19,7 +19,6 @@ import javassist.NotFoundException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -202,10 +201,8 @@ public class JarArchiveComparator {
 	 * @return a list of {@link japicmp.model.JApiClass} that represent the changes
 	 */
 	List<JApiClass> compareClassLists(JarArchiveComparatorOptions options, List<CtClass> oldClasses, List<CtClass> newClasses) {
-		List<CtClass> oldClassesFiltered = applyFilter(options, oldClasses);
-		List<CtClass> newClassesFiltered = applyFilter(options, newClasses);
 		ClassesComparator classesComparator = new ClassesComparator(this, options);
-		classesComparator.compare(oldClassesFiltered, newClassesFiltered);
+		classesComparator.compare(oldClasses, newClasses);
 		List<JApiClass> classList = classesComparator.getClasses();
 		if (LOGGER.isLoggable(Level.FINE)) {
 			for (JApiClass jApiClass : classList) {
@@ -216,16 +213,6 @@ public class JarArchiveComparator {
 		checkJavaObjectSerializationCompatibility(classList);
 		OutputFilter.sortClassesAndMethods(classList);
 		return classList;
-	}
-
-	private List<CtClass> applyFilter(JarArchiveComparatorOptions options, List<CtClass> ctClasses) {
-		List<CtClass> newList = new ArrayList<>(ctClasses.size());
-		for (CtClass ctClass : ctClasses) {
-			if (options.getFilters().includeClass(ctClass)) {
-				newList.add(ctClass);
-			}
-		}
-		return newList;
 	}
 
 	private List<CtClass> createListOfCtClasses(List<File> archives, ClassPool classPool) {
@@ -246,9 +233,15 @@ public class JarArchiveComparator {
 						} catch (Exception e) {
 							throw new JApiCmpException(Reason.IoException, String.format("Failed to load file from jar '%s' as class file: %s.", name, e.getMessage()), e);
 						}
-						classes.add(ctClass);
-						if (LOGGER.isLoggable(Level.FINE)) {
-							LOGGER.fine(String.format("Adding class '%s' with jar name '%s' to list.", ctClass.getName(), name));
+						if (options.getFilters().includeClass(ctClass)) {
+							classes.add(ctClass);
+							if (LOGGER.isLoggable(Level.FINE)) {
+								LOGGER.fine(String.format("Adding class '%s' with jar name '%s' to list.", ctClass.getName(), name));
+							}
+						} else {
+						  if (LOGGER.isLoggable(Level.FINE)) {
+							LOGGER.fine(String.format("Ignoring class '%s' with jar name '%s'.", ctClass.getName(), name));
+						  }
 						}
 						if (name.endsWith("package-info.class")) {
 							updatePackageFilter(ctClass);
