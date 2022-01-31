@@ -31,13 +31,12 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
-import org.eclipse.aether.graph.DependencyFilter;
-import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.*;
 
@@ -673,13 +672,14 @@ public class JApiCmpMojo extends AbstractMojo {
 		DefaultArtifact defaultArtifact = createDefaultArtifact(mavenProject, mavenProject.getVersion());
 		request.setRoot(new org.eclipse.aether.graph.Dependency(defaultArtifact, "compile"));
 		try {
-			DependencyResult dependencyResult = mavenParameters.getRepoSystem().resolveDependencies(mavenParameters.getRepoSession(), new DependencyRequest(
-				request, new DependencyFilter() {
-				@Override
-				public boolean accept(final DependencyNode node, final List<DependencyNode> parents) {
-					return !"test".equalsIgnoreCase(node.getDependency().getScope());
-				}
-			}));
+			final DefaultRepositorySystemSession repositorySystemSession =
+				new DefaultRepositorySystemSession(mavenParameters.getRepoSession());
+			repositorySystemSession.setDependencySelector(new CompileScopeDependencySelector());
+
+			DependencyResult dependencyResult = mavenParameters.getRepoSystem().resolveDependencies(
+				repositorySystemSession,
+				new DependencyRequest(
+					request, (node, parents) -> true));
 			Set<String> classPathEntries = new HashSet<>();
 			for (ArtifactResult artifactResult : dependencyResult.getArtifactResults()) {
 				Artifact artifact = artifactResult.getArtifact();
