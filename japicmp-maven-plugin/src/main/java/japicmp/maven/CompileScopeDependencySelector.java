@@ -21,6 +21,9 @@ import org.eclipse.aether.collection.DependencyCollectionContext;
 import org.eclipse.aether.collection.DependencySelector;
 import org.eclipse.aether.graph.Dependency;
 
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 /**
  * A {@link DependencySelector} that replicates the actual compile scope.
  * Specifically, it excludes all test dependencies and all transitive dependencies of provided/optional dependencies.
@@ -28,36 +31,50 @@ import org.eclipse.aether.graph.Dependency;
  */
 class CompileScopeDependencySelector implements DependencySelector {
 
+  private final int level;
+
+  public CompileScopeDependencySelector() {
+	this(0);
+  }
+
+  public CompileScopeDependencySelector(int i) {
+	this.level = i;
+  }
+
+  @Override
+  public boolean selectDependency(Dependency dependency) {
+	System.out.println(IntStream.range(0, level).mapToObj(i -> "\t").collect(Collectors.joining()) + dependency);
+	return isNoTestDependency(dependency);
+  }
+
+  @Override
+  public DependencySelector deriveChildSelector(DependencyCollectionContext context) {
+	final Dependency dependency = context.getDependency();
+	System.out.println(dependency + " " + isProvidedDependency(dependency) + " " + dependency.isOptional());
+	return isProvidedDependency(dependency) || dependency.isOptional()
+		? new CompileScopeTransitiveDependencySelector()
+		: new CompileScopeDependencySelector(level + 1);
+  }
+
+  private static class CompileScopeTransitiveDependencySelector implements DependencySelector {
+
 	@Override
 	public boolean selectDependency(Dependency dependency) {
-		return isNoTestDependency(dependency);
+	  return false;
 	}
 
 	@Override
 	public DependencySelector deriveChildSelector(DependencyCollectionContext context) {
-		return isProvidedDependency(context.getDependency()) || context.getDependency().isOptional()
-			? new CompileScopeTransitiveDependencySelector()
-			: this;
+	  return this;
 	}
+  }
 
-	private static class CompileScopeTransitiveDependencySelector implements DependencySelector {
-		@Override
-		public boolean selectDependency(Dependency dependency) {
-			return isNoTestDependency(dependency) && !dependency.isOptional() && !isProvidedDependency(dependency);
-		}
+  private static boolean isNoTestDependency(Dependency dependency) {
+	return !"test".equalsIgnoreCase(dependency.getScope());
+  }
 
-		@Override
-		public DependencySelector deriveChildSelector(DependencyCollectionContext context) {
-			return this;
-		}
-	}
-
-	private static boolean isNoTestDependency(Dependency dependency) {
-		return !"test".equalsIgnoreCase(dependency.getScope());
-	}
-
-	private static boolean isProvidedDependency(Dependency dependency) {
-		return "provided".equalsIgnoreCase(dependency.getScope());
-	}
+  private static boolean isProvidedDependency(Dependency dependency) {
+	return "provided".equalsIgnoreCase(dependency.getScope());
+  }
 }
 
