@@ -36,9 +36,9 @@ import static japicmp.util.FileHelper.toFileList;
  */
 public class JarArchiveComparator {
 	private static final Logger LOGGER = Logger.getLogger(JarArchiveComparator.class.getName());
-	private ClassPool commonClassPool;
-	private ClassPool oldClassPool;
-	private ClassPool newClassPool;
+	private MyClassPool commonClassPool;
+	private MyClassPool oldClassPool;
+	private MyClassPool newClassPool;
 	private String commonClassPathAsString = "";
 	private String oldClassPathAsString = "";
 	private String newClassPathAsString = "";
@@ -102,12 +102,12 @@ public class JarArchiveComparator {
 
 	private void setupClasspaths() {
 		if (this.options.getClassPathMode() == JarArchiveComparatorOptions.ClassPathMode.ONE_COMMON_CLASSPATH) {
-			commonClassPool = new ClassPool();
+			commonClassPool = new MyClassPool();
 			commonClassPathAsString = setupClasspath(commonClassPool, this.options.getClassPathEntries());
 		} else if (this.options.getClassPathMode() == JarArchiveComparatorOptions.ClassPathMode.TWO_SEPARATE_CLASSPATHS) {
-			oldClassPool = new ClassPool();
+			oldClassPool = new MyClassPool();
 			oldClassPathAsString = setupClasspath(oldClassPool, this.options.getOldClassPath());
-			newClassPool = new ClassPool();
+			newClassPool = new MyClassPool();
 			newClassPathAsString = setupClasspath(newClassPool, this.options.getNewClassPath());
 		} else {
 			throw new JApiCmpException(Reason.IllegalState, "Unknown classpath mode: " + this.options.getClassPathMode());
@@ -215,7 +215,7 @@ public class JarArchiveComparator {
 		return classList;
 	}
 
-	private List<CtClass> createListOfCtClasses(List<File> archives, ClassPool classPool) {
+	private List<CtClass> createListOfCtClasses(List<File> archives, MyClassPool classPool) {
 		List<CtClass> classes = new LinkedList<>();
 		for (File archive : archives) {
 			if (LOGGER.isLoggable(Level.FINE)) {
@@ -239,6 +239,7 @@ public class JarArchiveComparator {
 								LOGGER.fine(String.format("Adding class '%s' with jar name '%s' to list.", ctClass.getName(), name));
 							}
 						} else {
+						  classPool.remove(ctClass);
 						  if (LOGGER.isLoggable(Level.FINE)) {
 							LOGGER.fine(String.format("Ignoring class '%s' with jar name '%s'.", ctClass.getName(), name));
 						  }
