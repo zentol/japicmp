@@ -24,43 +24,23 @@ import org.eclipse.aether.graph.Dependency;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * A {@link DependencySelector} that replicates the actual compile scope.
- * Specifically, it excludes all test dependencies and all transitive dependencies of provided/optional dependencies.
- * Note that direct provided/optional dependencies are included.
- */
 class CompileScopeDependencySelector implements DependencySelector {
-
-  private final int level;
-
-  public CompileScopeDependencySelector() {
-	this(0);
-  }
-
-  public CompileScopeDependencySelector(int i) {
-	this.level = i;
-  }
 
   @Override
   public boolean selectDependency(Dependency dependency) {
-	System.out.println(IntStream.range(0, level).mapToObj(i -> "\t").collect(Collectors.joining()) + dependency);
 	return isNoTestDependency(dependency);
   }
 
   @Override
   public DependencySelector deriveChildSelector(DependencyCollectionContext context) {
-	final Dependency dependency = context.getDependency();
-	System.out.println(dependency + " " + isProvidedDependency(dependency) + " " + dependency.isOptional());
-	return isProvidedDependency(dependency) || dependency.isOptional()
-		? new CompileScopeTransitiveDependencySelector()
-		: new CompileScopeDependencySelector(level + 1);
+	return new CompileScopeTransitiveDependencySelector();
   }
 
   private static class CompileScopeTransitiveDependencySelector implements DependencySelector {
 
 	@Override
 	public boolean selectDependency(Dependency dependency) {
-	  return false;
+	  return isNoTestDependency(dependency) && !isProvidedDependency(dependency) && !dependency.isOptional();
 	}
 
 	@Override
