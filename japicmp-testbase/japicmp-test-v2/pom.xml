@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.github.siom79.japicmp</groupId>
+		<groupId>io.github.zentol.japicmp</groupId>
 		<artifactId>japicmp-testbase</artifactId>
-		<version>0.17.1</version>
+		<version>0.17.1.1_m325</version>
 	</parent>
 
 	<artifactId>japicmp-test-v2</artifactId>
@@ -30,7 +30,7 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>com.github.siom79.japicmp</groupId>
+				<groupId>io.github.zentol.japicmp</groupId>
 				<artifactId>japicmp-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<dependencies>
@@ -50,7 +50,7 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -85,7 +85,7 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -134,13 +134,13 @@
 	<reporting>
 		<plugins>
 			<plugin>
-				<groupId>com.github.siom79.japicmp</groupId>
+				<groupId>io.github.zentol.japicmp</groupId>
 				<artifactId>japicmp-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<configuration>
 					<oldVersion>
 						<dependency>
-							<groupId>com.github.siom79.japicmp</groupId>
+							<groupId>io.github.zentol.japicmp</groupId>
 							<artifactId>japicmp-test-v1</artifactId>
 							<version>${project.version}</version>
 						</dependency>

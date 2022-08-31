@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
 		<artifactId>japicmp-testbase</artifactId>
-		<groupId>com.github.siom79.japicmp</groupId>
-		<version>0.17.1</version>
+		<groupId>io.github.zentol.japicmp</groupId>
+		<version>0.17.1.1_m325</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -12,14 +12,14 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.github.siom79.japicmp</groupId>
+			<groupId>io.github.zentol.japicmp</groupId>
 			<artifactId>japicmp-testbundle-v1</artifactId>
 			<version>${project.version}</version>
 			<type>bundle</type>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.github.siom79.japicmp</groupId>
+			<groupId>io.github.zentol.japicmp</groupId>
 			<artifactId>japicmp-testbundle-v2</artifactId>
 			<version>${project.version}</version>
 			<type>bundle</type>
@@ -42,20 +42,20 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>com.github.siom79.japicmp</groupId>
+				<groupId>io.github.zentol.japicmp</groupId>
 				<artifactId>japicmp-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<configuration>
 					<oldVersion>
 						<dependency>
-							<groupId>com.github.siom79.japicmp</groupId>
+							<groupId>io.github.zentol.japicmp</groupId>
 							<artifactId>japicmp-testbundle-v1</artifactId>
 							<version>${project.version}</version>
 						</dependency>
 					</oldVersion>
 					<newVersion>
 						<dependency>
-							<groupId>com.github.siom79.japicmp</groupId>
+							<groupId>io.github.zentol.japicmp</groupId>
 							<artifactId>japicmp-testbundle-v2</artifactId>
 							<version>${project.version}</version>
 						</dependency>

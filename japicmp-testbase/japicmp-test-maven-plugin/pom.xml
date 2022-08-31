@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
-		<groupId>com.github.siom79.japicmp</groupId>
+		<groupId>io.github.zentol.japicmp</groupId>
 		<artifactId>japicmp-testbase</artifactId>
-		<version>0.17.1</version>
+		<version>0.17.1.1_m325</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -28,12 +28,12 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.github.siom79.japicmp</groupId>
+			<groupId>io.github.zentol.japicmp</groupId>
 			<artifactId>japicmp-maven-plugin</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.siom79.japicmp</groupId>
+			<groupId>io.github.zentol.japicmp</groupId>
 			<artifactId>japicmp-test-v2</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
@@ -54,7 +54,7 @@
 						<configuration>
 							<artifactItems>
 								<artifactItem>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 									<overWrite>true</overWrite>
@@ -75,7 +75,7 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>com.github.siom79.japicmp</groupId>
+				<groupId>io.github.zentol.japicmp</groupId>
 				<artifactId>japicmp-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<executions>
@@ -88,14 +88,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -129,24 +129,24 @@
 						<configuration>
 							<oldVersions>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test2-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersions>
 							<newVersions>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test2-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -176,14 +176,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -211,14 +211,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-non-existing-artifact</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -245,14 +245,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -276,14 +276,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -304,14 +304,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -359,14 +359,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -694,7 +694,7 @@
 	<reporting>
 		<plugins>
 			<plugin>
-				<groupId>com.github.siom79.japicmp</groupId>
+				<groupId>io.github.zentol.japicmp</groupId>
 				<artifactId>japicmp-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<configuration>
@@ -714,7 +714,7 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v1</artifactId>
 									<version>${project.version}</version>
 								</dependency>
@@ -737,14 +737,14 @@
 						<configuration>
 							<oldVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
 							</oldVersion>
 							<newVersion>
 								<dependency>
-									<groupId>com.github.siom79.japicmp</groupId>
+									<groupId>io.github.zentol.japicmp</groupId>
 									<artifactId>japicmp-test-v2</artifactId>
 									<version>${project.version}</version>
 								</dependency>
