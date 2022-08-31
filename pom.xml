@@ -138,7 +138,7 @@
 		<github.account>siom79</github.account>
 		<github.project>japicmp</github.project>
 		<maven.site.skip>false</maven.site.skip>
-		<maven-api.version>3.6.3</maven-api.version>
+		<maven-api.version>3.2.5</maven-api.version>
 		<resolver.version>1.4.1</resolver.version> <!-- keep in sync with maven api version -->
 		<reporting.version>3.1.0</reporting.version>
 		<plugin-annotation.version>3.6.4</plugin-annotation.version>
