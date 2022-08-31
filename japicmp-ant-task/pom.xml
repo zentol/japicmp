@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
-		<groupId>com.github.siom79.japicmp</groupId>
+		<groupId>io.github.zentol.japicmp</groupId>
 		<artifactId>japicmp-base</artifactId>
-		<version>0.16.1-SNAPSHOT</version>
+		<version>0.16.0_m325</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -13,7 +13,7 @@
 	<description>japicmp-ant-task is an Ant task that computes the differences between two
 		versions of a jar file/artifact in order to ease the API documentation.
 	</description>
-	<url>https://github.com/siom79/japicmp</url>
+	<url>https://github.com/zentol/japicmp</url>
 
 	<licenses>
 		<license>
@@ -29,7 +29,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.github.siom79.japicmp</groupId>
+			<groupId>io.github.zentol.japicmp</groupId>
 			<artifactId>japicmp</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -95,7 +95,7 @@
 				<configuration>
 					<artifactItems>
 						<artifactItem>
-							<groupId>${project.groupId}</groupId>
+							<groupId>com.github.siom79.japicmp</groupId>
 							<artifactId>japicmp</artifactId>
 							<version>0.9.4</version>
 							<type>jar</type>
