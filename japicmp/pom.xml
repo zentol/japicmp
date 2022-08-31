@@ -2,9 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.github.siom79.japicmp</groupId>
+		<groupId>io.github.zentol.japicmp</groupId>
 		<artifactId>japicmp-base</artifactId>
-		<version>0.17.1</version>
+		<version>0.17.1_m325</version>
 	</parent>
 
 	<artifactId>japicmp</artifactId>
@@ -13,7 +13,7 @@
 	<description>japicmp is a library that computes the differences between two
 		versions of a jar file/artifact in order to ease the API documentation for clients/customers.
 	</description>
-	<url>https://github.com/siom79/japicmp</url>
+	<url>https://github.com/zentol/japicmp</url>
 
 	<licenses>
 		<license>
@@ -126,7 +126,7 @@
 				<artifactId>maven-checkstyle-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<groupId>com.github.siom79.japicmp</groupId>
+				<groupId>io.github.zentol.japicmp</groupId>
 				<artifactId>japicmp-maven-plugin</artifactId>
 				<version>${project.version}</version>
 				<configuration>

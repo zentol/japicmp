@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.github.siom79.japicmp</groupId>
-	<artifactId>japicmp-base</artifactId>
-	<version>0.17.1</version>
-	<packaging>pom</packaging>
+    <groupId>io.github.zentol.japicmp</groupId>
+    <artifactId>japicmp-base</artifactId>
+    <version>0.17.1_m325</version>
+    <packaging>pom</packaging>
 
-	<name>japicmp-base</name>
-	<description>japicmp is a tool/maven plugin that compares two versions of a jar archive for binary compatibility.</description>
-	<url>https://github.com/siom79/japicmp</url>
+    <name>japicmp-base</name>
+    <description>japicmp is a tool/maven plugin that compares two versions of a jar archive for binary compatibility.</description>
+    <url>https://github.com/zentol/japicmp</url>
 
 	<licenses>
 		<license>
@@ -135,7 +135,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<github.account>siom79</github.account>
+		<github.account>zentol</github.account>
 		<github.project>japicmp</github.project>
 		<maven.site.skip>false</maven.site.skip>
 		<maven-api.version>3.6.3</maven-api.version>
@@ -146,7 +146,7 @@
 		<javassist.version>3.29.1-GA</javassist.version>
 		<guava.version>30.1-jre</guava.version>
 		<jaxb.version>2.3.2</jaxb.version>
-		<sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots</sonatypeOssDistMgmtSnapshotsUrl>
+		<javax-activation.version>1.1</javax-activation.version>
 	</properties>
 
 	<modules>
@@ -394,7 +394,7 @@
 		<connection>scm:git:https://github.com/${github.account}/${github.project}.git</connection>
 		<developerConnection>scm:git:https://github.com/${github.account}/${github.project}.git</developerConnection>
 		<url>https://github.com/${github.account}/${github.project}.git</url>
-		<tag>japicmp-base-0.17.1</tag>
+		<tag>japicmp-base-0.17.1_m325</tag>
 	</scm>
 
 	<distributionManagement>
@@ -405,12 +405,12 @@
 		<snapshotRepository>
 			<id>sonatype-nexus-snapshots</id>
 			<name>Sonatype Nexus Snapshots</name>
-			<url>${sonatypeOssDistMgmtSnapshotsUrl}</url>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
 			<name>Central Repository OSSRH</name>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
 
