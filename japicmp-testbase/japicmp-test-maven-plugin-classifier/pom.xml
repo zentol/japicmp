@@ -52,16 +52,6 @@
 							<artifactId>commons-math3</artifactId>
 							<version>3.4</version>
 						</dependency>
-						<dependency>
-							<groupId>com.github.siom79.japicmp</groupId>
-							<artifactId>japicmp-test-provided-dependency</artifactId>
-							<version>${project.version}</version>
-						</dependency>
-						<dependency>
-							<groupId>com.github.siom79.japicmp</groupId>
-							<artifactId>japicmp-test-optional-dependency</artifactId>
-							<version>${project.version}</version>
-						</dependency>
 					</dependencies>
 				</configuration>
 				<executions>

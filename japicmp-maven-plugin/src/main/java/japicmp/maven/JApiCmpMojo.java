@@ -669,31 +669,6 @@ public class JApiCmpMojo extends AbstractMojo {
 				if (classPathEntries.add(absolutePath)) {
 					if (getLog().isDebugEnabled()) {
 						getLog().debug("Adding to classpath: " + absolutePath);
-/*=======
-		CollectRequest request = new CollectRequest();
-		DefaultArtifact defaultArtifact = createDefaultArtifact(mavenProject, mavenProject.getVersion());
-		request.setRoot(new org.eclipse.aether.graph.Dependency(defaultArtifact, "compile"));
-		try {
-			final DefaultRepositorySystemSession repositorySystemSession =
-				new DefaultRepositorySystemSession(mavenParameters.getRepoSession());
-			repositorySystemSession.setDependencySelector(new CompileScopeDependencySelector(getLog()));
-
-			DependencyResult dependencyResult = mavenParameters.getRepoSystem().resolveDependencies(
-				repositorySystemSession,
-				new DependencyRequest(
-					request, (node, parents) -> true));
-			Set<String> classPathEntries = new HashSet<>();
-			for (ArtifactResult artifactResult : dependencyResult.getArtifactResults()) {
-				Artifact artifact = artifactResult.getArtifact();
-				File resolvedFile = artifact.getFile();
-				if (resolvedFile != null) {
-					String absolutePath = resolvedFile.getAbsolutePath();
-					if (!classPathEntries.contains(absolutePath)) {
-						if (getLog().isDebugEnabled()) {
-							getLog().debug("Adding to classpath: " + absolutePath);
-						}
-						classPathEntries.add(absolutePath);
->>>>>>> d1ecbcc (Put provided/optional dependencies on classpath)*/
 					}
 				}
 			} else {

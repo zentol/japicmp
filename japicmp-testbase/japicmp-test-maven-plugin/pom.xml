@@ -38,18 +38,6 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.github.siom79.japicmp</groupId>
-			<artifactId>japicmp-test-provided-dependency</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.github.siom79.japicmp</groupId>
-			<artifactId>japicmp-test-optional-dependency</artifactId>
-			<version>${project.version}</version>
-			<optional>true</optional>
-		</dependency>
 	</dependencies>
 
 	<build>
